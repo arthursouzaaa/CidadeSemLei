@@ -1,0 +1,1 @@
+// Arquivo vazio, usado apenas para segurança do Electron.
