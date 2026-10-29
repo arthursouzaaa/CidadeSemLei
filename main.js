@@ -15,9 +15,9 @@ function createWindow() {
     }
   });
   Menu.setApplicationMenu(null);
-  win.loadFile('index.html');
+win.loadFile('index.html');
 
-  // win.webContents.openDevTools();
+win.webContents.openDevTools();
 
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type === 'keyDown' && input.key === 'F11') {

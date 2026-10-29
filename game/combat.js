@@ -22,9 +22,13 @@ function nearAtm() {
 
 function itemHudText() {
   const s = P.sel;
-  if (!s) { const w = WP[P.w]; return w.n + ' ' + (ammo[P.w] === Infinity ? '∞' : ammo[P.w]); }
-  if (s === 'faca' || s === 'bastao') return ITEM_NAMES[s];
-  return ITEM_NAMES[s] + ' x' + (inv[s] || 0);
+  if (s) {
+    if (s === 'faca' || s === 'bastao') return ITEM_NAMES[s];
+    return ITEM_NAMES[s] + ' x' + (inv[s] || 0);
+  }
+  if (P.w < 0 || !WP[P.w]) return 'Mão livre';
+  const w = WP[P.w];
+  return w.n + ' ' + (ammo[P.w] === Infinity ? '∞' : ammo[P.w]);
 }
 
 function selectItem(k) {

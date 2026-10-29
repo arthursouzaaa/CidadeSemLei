@@ -1,9 +1,10 @@
 // ===== TRABALHO HONESTO: PIZZARIA, SUSHI E HAMBURGUERIA =====
 const DELIVERY = {
-  pizza:  { pmin: 50, pmax: 80, len: 4, dmin: 400,  dmax: 800 },
-  sushi:  { pmin: 150, pmax: 150, len: 6, dmin: 900, dmax: 1400 },
-  burger: { pmin: 300, pmax: 300, len: 4, dmin: 1800, dmax: 2600 }
+  pizza:  { pmin: 250, pmax: 400, len: 4, dmin: 400,  dmax: 800 },
+  sushi:  { pmin: 600, pmax: 600, len: 6, dmin: 900, dmax: 1400 },
+  burger: { pmin: 1000, pmax: 1000, len: 4, dmin: 1800, dmax: 2600 }
 };
+const PIZZA_DENT_FINE = 40;
 const RESTS = [
   { name: 'Pizzaria',     type: 'pizza',  cell: [8, 13], col: '#b91c1c', tag: 'PIZZARIA' },
   { name: 'Sushi',        type: 'sushi',  cell: [7, 7],  col: '#0e7490', tag: 'SUSHI' },
@@ -90,7 +91,8 @@ function updDelivery(dt) {
   if (sameCar && carDrop > 0.01) {
     if (o.type === 'sushi') return failOrder('O sushi estragou com a batida!');
     if (o.type === 'pizza' && carDrop > 3 && o.cd <= 0) {
-      o.cd = .8; o.pay = Math.max(0, o.pay - 20); toast('A pizza amassou! -$20');
+      o.cd = .8; o.pay = Math.max(0, o.pay - PIZZA_DENT_FINE);
+      toast('A pizza amassou! -$' + PIZZA_DENT_FINE);
     }
   }
   o.lastCarRef = P.veh;

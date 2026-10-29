@@ -17,7 +17,6 @@ function pickModel() {
   return r < .12 ? 'caminhao' : r < .27 ? 'esportivo' : 'sedan';
 }
 
-// ===== GARAGEM (dentro de um prédio) =====
 const GAR_CELL = { i: 5, j: 5 };
 const GAR_BLD = {
   x: GAR_CELL.i * CELL + RD + 20, y: GAR_CELL.j * CELL + RD + 20,
@@ -60,18 +59,19 @@ function mkPed(x, y, o = {}) {
 
 function init() {
   cars = []; peds = []; bullets = []; PT = []; cash = []; pk = []; FT = []; toasts = [];
-  P = { x: SX, y: SY, a: 0, hp: 100, r: 8, veh: null, cd: 0, w: 0, iv: 0, col: '#f97316', skin: '#d9a066', sel: null };
-  cars.push(mkCar(8 * CELL + 90, SY, -Math.PI / 2, { ai: false, col: '#e11d48' }));
-
   const saved = loadGame();
   money = saved.money; owned = saved.owned; ammo = saved.ammo; garage = saved.garage;
   inv = saved.inv; vestEnd = 0;
+  bank = saved.bank; debt = saved.debt; look = saved.look;
+  const r = saved.run;
+  const sx = r ? r.x : SX, sy = r ? r.y : SY;
+  P = { x: sx, y: sy, a: 0, hp: 100, r: 8, veh: null, cd: 0, w: -1, iv: 0, col: '#f97316', skin: '#d9a066', sel: null };
+  cars.push(mkCar(8 * CELL + 90, SY, -Math.PI / 2, { ai: false, col: '#e11d48' }));
   garageAnim = null;
   order = null; codeBuf = '';
   wanted = 0; heatT = 0; tod = 9; mission = null; mWait = 5;
-  camX = SX; camY = SY;
+  camX = sx; camY = sy;
   fireSpawnT = 20;
-
   for (let k = 0; k < 40; k++) {
     const p = randWalk();
     pk.push({ x: p[0], y: p[1], t: pick(['hp', 'hp', 'smg', 'shot']) });
@@ -208,9 +208,10 @@ function onKey(c) {
     if (st === 'play') st = 'pause'; else if (st === 'pause') st = 'play';
     return;
   }
-  if (st !== 'play') return;
+    if (st !== 'play') return;
   if (c === 'KeyE') { if (!tryAtm() && !tryRestaurant()) toggleVeh(); return; }
   if (c === 'KeyG') garageAction();
+  if (c === 'Digit0') { P.w = -1; P.sel = null; toast('Mão livre'); return; }
   if (c === 'Digit1' || c === 'Digit2' || c === 'Digit3') {
     const w = +c.slice(-1) - 1;
     if (owned[w] && (ammo[w] > 0)) { P.w = w; P.sel = null; }
@@ -275,6 +276,9 @@ function playerFoot(dt) {
       if (inv[P.sel] > 0) meleeAttack();
     } else if (P.sel) {
       throwItem();
+    } else if (P.w < 0) {
+      P.cd = .45;
+      meleeAttack();
     } else {
       const w = WP[P.w];
       if (ammo[P.w] > 0) {
@@ -288,7 +292,7 @@ function playerFoot(dt) {
         shake = Math.max(shake, P.w === 2 ? 4 : 1.5);
         burst(P.x + Math.cos(P.a) * 16, P.y + Math.sin(P.a) * 16, '#fde047', 3, 80, .1, 3);
         for (const p of peds) if (!p.dead && !p.cop && hyp(p.x - P.x, p.y - P.y) < 500) { p.fl = 5; p.a = Math.atan2(p.y - P.y, p.x - P.x); }
-        if (ammo[P.w] <= 0 && P.w !== 0) { P.w = 0; toast('Sem munição'); }
+        if (ammo[P.w] <= 0) { P.w = -1; toast('Sem munição: mão livre'); }
       }
     }
   }
@@ -501,20 +505,21 @@ function updBullets(dt) {
 
 function startDelivery() {
   const a = randWalk(), b = randWalk();
-  mission = { t: 'd', s: 0, a, b, r: Math.round(hyp(a[0] - b[0], a[1] - b[1]) / 10) * 10 + 300 };
+  const dist = hyp(a[0] - b[0], a[1] - b[1]);
+  mission = { t: 'd', s: 0, a, b, r: Math.round(clamp(dist / 10 * 1.2, 300, 450) / 10) * 10 };
   toast('MISSÃO: pegue a encomenda (marcador amarelo).');
 }
 function startHit() {
   const a = randWalk(), p = mkPed(a[0], a[1]);
   p.hp = 100; p.tg = 1; p.col = '#facc15'; peds.push(p);
-  mission = { t: 'h', p, r: 1500 };
+  mission = { t: 'h', p, r: 500 };
   toast('MISSÃO: elimine o alvo (marcador vermelho).');
 }
 function startSteal() {
   const cands = cars.filter(c => c.ai && !c.cop && !c.pol && !c.dead && !c.drv && !c.fire && hyp(c.x - P.x, c.y - P.y) > 150);
   if (!cands.length) return startDelivery();
   const c = pick(cands);
-  mission = { t: 's', car: c, r: 1200 };
+  mission = { t: 's', car: c, r: 450 };
   toast('MISSÃO: roube o carro marcado (marcador laranja).');
 }
 function startRace() {
@@ -530,12 +535,12 @@ function startRace() {
     if (!p) p = [x, y];
     cps.push(p); x = p[0]; y = p[1];
   }
-  mission = { t: 'r', cps, idx: 0, timeLeft: 110, r: 1500 };
+  mission = { t: 'r', cps, idx: 0, timeLeft: 110, r: 600 };
   toast('CORRIDA: passe pelos 3 checkpoints ciano em 110 segundos!');
 }
 function startEscape() {
   crime(2);
-  mission = { t: 'e', prog: 0, r: 800 + wanted * 200 };
+  mission = { t: 'e', prog: 0, r: 300 + wanted * 100 };
   toast('MISSÃO: a polícia está atrás de você! Aguente 30 segundos.');
 }
 function newMission() {
@@ -631,6 +636,7 @@ function update(dt) {
   updFireSpawn(dt);
   updVest(dt);
   updCombat(dt);
+  if (st === 'play') applyInterest();
   if (P.veh) { P.x = P.veh.x; P.y = P.veh.y; P.a = P.veh.a; }
   else { playerFoot(dt); engine(null); }
   for (const c of cars) if (!c.dead) (c.fire ? updFire(c, dt) : updCar(c, dt));
@@ -674,13 +680,12 @@ function update(dt) {
   if (spawnT <= 0) {
     spawnT = .25;
     const vr = VR();
-    if (peds.filter(p => !p.cop && !p.dead && !p.idle).length < PED_MAX) { spawnPed(false); spawnPed(false); }
+    peds = peds.filter(p => !(p.dead && p.dt <= 0) && (p.tg || p.dead || p.idle || hyp(p.x - P.x, p.y - P.y) < vr + 500));
     if (cars.filter(c => c.ai && !c.cop && !c.dead && !c.fire).length < 16) spawnCar(false);
     if (wanted > 0) {
       if (peds.filter(p => p.cop && !p.dead).length < wanted * 2) spawnPed(false, true);
       if (cars.filter(c => c.cop && !c.dead).length < Math.max(0, wanted - 1)) spawnCar(false, true);
     }
-    peds = peds.filter(p => !(p.dead && p.dt <= 0) && (p.tg || p.dead || p.idle || hyp(p.x - P.x, p.y - P.y) < vr + 500));
     cars = cars.filter(c => !c.dead && (c.drv || !c.ai && hyp(c.x - P.x, c.y - P.y) < vr + 900 || c.ai && hyp(c.x - P.x, c.y - P.y) < vr + 500));
   } else cars = cars.filter(c => !c.dead);
 
@@ -695,6 +700,7 @@ function update(dt) {
 
   if (P.hp <= 0) die();
 }
+
 function updCam(dt) {
   const lv = P.veh ? hyp(P.veh.vx, P.veh.vy) : 0;
   const tx = P.x + (P.veh ? P.veh.vx * .35 : 0), ty = P.y + (P.veh ? P.veh.vy * .35 : 0);

@@ -1,4 +1,4 @@
-// ===== LOJA DE CONSUMO (prédio verde, leste da garagem) =====
+// ===== LOJA VERDE: consumo (sem armas) =====
 const SHOP_CELL = { i: 10, j: 5 };
 const SHOP_RECT = {
   x: SHOP_CELL.i * CELL + RD + 20, y: SHOP_CELL.j * CELL + RD + 20,
@@ -21,9 +21,8 @@ blocks[AM_CELL.j * N + AM_CELL.i] = {
   x: AM_CELL.i * CELL + RD, y: AM_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: AM_RECT.x, y: AM_RECT.y, w: AM_RECT.w, h: AM_RECT.h, z: 90, col: '#3f4a2a' }]
 };
-const AMMU_KEYS = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8'];
+const AMMU_KEYS = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9'];
 
-// ----- LOJA VERDE: consumo -----
 function shopNear() { return !P.veh && hyp(P.x - SHOP_DOOR.x, P.y - SHOP_DOOR.y) < 70; }
 
 function shopList() {
@@ -69,17 +68,25 @@ function shopBuy(i) {
   toast('Comprado: ' + it.name() + ' (-$' + p + ')');
 }
 
-// ----- AMMU-NATION: armas, munição e explosivos -----
 const AMMU_WARN = 'Isso aqui é coisa do crime, parceiro. Se a polícia te pegar com isso, é cadeia na certa.';
 
 function ammuNear() { return !P.veh && hyp(P.x - AM_DOOR.x, P.y - AM_DOOR.y) < 70; }
 
+// Armas e munições: só na Ammu-Nation. Armas são compradas uma vez; munições são lotes.
 function ammuList() {
   return [
-    { name: 'Munição SMG (+60)', price: 120, crime: 0, need: () => '',
-      run() { ammo[1] += 60; owned[1] = true; } },
-    { name: 'Munição Escopeta (+12)', price: 150, crime: 0, need: () => '',
-      run() { ammo[2] += 12; owned[2] = true; } },
+    { name: 'Pistola', price: 2000, crime: 0, need: () => owned[0] ? 'Você já tem a pistola' : '',
+      run() { owned[0] = true; ammo[0] = Infinity; } },
+    { name: 'Munição Pistola (+30)', price: 150, crime: 0, need: () => owned[0] ? '' : 'Compre a pistola primeiro',
+      run() { ammo[0] = Infinity; } },
+    { name: 'SMG', price: 8000, crime: 0, need: () => owned[1] ? 'Você já tem a SMG' : '',
+      run() { owned[1] = true; ammo[1] += 60; } },
+    { name: 'Munição SMG (+60)', price: 300, crime: 0, need: () => owned[1] ? '' : 'Compre a SMG primeiro',
+      run() { ammo[1] += 60; } },
+    { name: 'Escopeta', price: 12000, crime: 0, need: () => owned[2] ? 'Você já tem a escopeta' : '',
+      run() { owned[2] = true; ammo[2] += 12; } },
+    { name: 'Munição Escopeta (+12)', price: 400, crime: 0, need: () => owned[2] ? '' : 'Compre a escopeta primeiro',
+      run() { ammo[2] += 12; } },
     { name: 'Faca (silenciosa)', price: 200, crime: 0, need: () => '',
       run() { inv.faca++; } },
     { name: 'Bastão', price: 120, crime: 0, need: () => '',
@@ -103,12 +110,8 @@ function ammuBuy(i) {
   it.run();
   saveGame();
   snd(900, .1, 'sine', .05, 300);
-  if (it.crime) {
-    crime(it.crime);
-    toast(AMMU_WARN);
-  } else {
-    toast('Comprado: ' + it.name + ' (-$' + it.price + ')');
-  }
+  if (it.crime) { crime(it.crime); toast(AMMU_WARN); }
+  else toast('Comprado: ' + it.name + ' (-$' + it.price + ')');
 }
 
 function updVest() {
@@ -119,7 +122,6 @@ function updVest() {
   }
 }
 
-// ----- TECLAS -----
 addEventListener('keydown', e => {
   if (st === 'play' && e.code === 'KeyF' && shopNear()) { st = 'shop'; return; }
   if (st === 'shop') {
@@ -135,7 +137,6 @@ addEventListener('keydown', e => {
   }
 });
 
-// ----- DESENHO -----
 function drawShopBuilding() {
   const b = SHOP_RECT;
   ctx.fillStyle = '#4ade80'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
@@ -180,17 +181,17 @@ function drawShopOverlay() {
 function drawAmmuOverlay() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = 'rgba(10,12,6,.85)'; ctx.fillRect(0, 0, W, H);
-  label('AMMU-NATION', W / 2, H / 2 - 170, 46, '#a3e635', 'center');
-  label('"Aqui é só pra quem sabe o que quer."', W / 2, H / 2 - 132, 16, '#94a3b8', 'center');
-  label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 100, 18, '#facc15', 'center');
+  label('AMMU-NATION', W / 2, H / 2 - 190, 46, '#a3e635', 'center');
+  label('"Aqui é só pra quem sabe o que quer."', W / 2, H / 2 - 152, 16, '#94a3b8', 'center');
+  label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 120, 18, '#facc15', 'center');
   ammuList().forEach((it, i) => {
-    const y = H / 2 - 62 + i * 38, err = it.need();
-    ctx.fillStyle = 'rgba(31,38,20,.95)'; ctx.fillRect(W / 2 - 300, y - 20, 600, 32);
+    const y = H / 2 - 82 + i * 30, err = it.need();
+    ctx.fillStyle = 'rgba(31,38,20,.95)'; ctx.fillRect(W / 2 - 300, y - 16, 600, 26);
     ctx.strokeStyle = it.crime ? '#b45309' : '#65a30d'; ctx.lineWidth = 2;
-    ctx.strokeRect(W / 2 - 300, y - 20, 600, 32);
-    label('[' + (i + 1) + '] ' + it.name, W / 2 - 280, y + 3, 16, '#ecfccb');
-    label(err || ('$' + it.price), W / 2 + 280, y + 3, 16, err ? '#f87171' : '#a3e635', 'right');
+    ctx.strokeRect(W / 2 - 300, y - 16, 600, 26);
+    label('[' + (i + 1) + '] ' + it.name, W / 2 - 280, y + 3, 14, '#ecfccb');
+    label(err || ('$' + it.price), W / 2 + 280, y + 3, 14, err ? '#f87171' : '#a3e635', 'right');
   });
   label('Itens em laranja são ilegais: compre e a polícia vem atrás.', W / 2, H / 2 + 236, 15, '#fb923c', 'center');
-  label('Aperte 1-7 para comprar   •   ESC ou R para sair', W / 2, H / 2 + 262, 16, '#94a3b8', 'center');
+  label('Aperte 1-9 para comprar   •   ESC ou R para sair', W / 2, H / 2 + 262, 16, '#94a3b8', 'center');
 }
