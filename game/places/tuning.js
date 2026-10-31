@@ -1,7 +1,7 @@
 // ===== ZOOM DA CÂMERA =====
 const ZOOM_BASE = 1.25;
 
-// ===== OFICINA: pintura, turbo e reparo (prédio na zona industrial, quarteirão 13,3) =====
+// ===== OFICINA: pintura, turbo, blindagem e reparo =====
 const OF_CELL = { i: 13, j: 3 };
 const OF_RECT = {
   x: OF_CELL.i * CELL + RD + 20, y: OF_CELL.j * CELL + RD + 20,
@@ -15,6 +15,7 @@ blocks[OF_CELL.j * N + OF_CELL.i] = {
 
 const PAINT_PRICE = 500, TURBO_PRICE = 1000, TURBO_MAX = 3, TURBO_STEP = 0.15;
 const REPAIR_PRICE_PER_HP = 3;
+const ARMOR_PRICE = 1500, ARMOR_MAX = 3, ARMOR_STEP = 0.15; // <-- NOVO
 
 function oficinaNearAny() { return hyp(P.x - OF_DOOR.x, P.y - OF_DOOR.y) < 70; }
 
@@ -40,6 +41,18 @@ function oficinaTurbo() {
   toast('Turbo ' + c.turbo + '/' + TURBO_MAX + ': velocidade máxima +' + Math.round(c.turbo * TURBO_STEP * 100) + '%');
 }
 
+function oficinaArmor() {
+  const c = P.veh;
+  if (!c) return toast('Entre no carro e traga ele até a oficina.');
+  if ((c.armorLevel || 0) >= ARMOR_MAX) return toast('Blindagem no máximo (' + ARMOR_MAX + '/' + ARMOR_MAX + ').');
+  if (money < ARMOR_PRICE) return toast('Dinheiro insuficiente ($' + ARMOR_PRICE + ')');
+  money -= ARMOR_PRICE;
+  c.armorLevel = (c.armorLevel || 0) + 1;
+  c.armor = Math.max(0.1, c.armor * (1 - ARMOR_STEP));
+  saveGame();
+  toast('Blindagem ' + c.armorLevel + '/' + ARMOR_MAX + ': dano recebido -' + Math.round(c.armorLevel * ARMOR_STEP * 100) + '%');
+}
+
 function oficinaRepair() {
   const c = P.veh;
   if (!c) return toast('Entre no carro e traga ele até a oficina.');
@@ -62,6 +75,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Digit1') { oficinaPaint(); e.stopImmediatePropagation(); }
   if (e.code === 'Digit2') { oficinaTurbo(); e.stopImmediatePropagation(); }
   if (e.code === 'Digit3') { oficinaRepair(); e.stopImmediatePropagation(); }
+  if (e.code === 'Digit4') { oficinaArmor(); e.stopImmediatePropagation(); }
 });
 
 const _finishGarageBase = finishGarage;
@@ -72,11 +86,18 @@ finishGarage = function () {
   if (!a) return;
   if (a.mode === 'in') {
     const g = garage[garage.length - 1];
-    if (g) { g.turbo = a.car.turbo || 0; g.col = a.car.col; }
+    if (g) { 
+      g.turbo = a.car.turbo || 0; 
+      g.col = a.car.col; 
+      g.armorLevel = a.car.armorLevel || 0;
+      g.armor = a.car.armor;
+    }
     saveGame();
   } else if (outG) {
     const c = cars[cars.length - 1];
     c.turbo = outG.turbo || 0;
+    c.armorLevel = outG.armorLevel || 0;
+    c.armor = outG.armor || c.armor;
     applyTurbo(c);
   }
 };
@@ -102,13 +123,14 @@ function drawOficinaOverlay() {
   label('OFICINA', W / 2, H / 2 - 150, 48, '#fb923c', 'center');
   label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 20, '#facc15', 'center');
   const c = P.veh;
-  label(c ? MODELS[c.model].n + '  •  turbo ' + (c.turbo || 0) + '/' + TURBO_MAX
+  label(c ? MODELS[c.model].n + '  •  turbo ' + (c.turbo || 0) + '/' + TURBO_MAX + '  •  blindagem ' + (c.armorLevel || 0) + '/' + ARMOR_MAX
           : 'Entre num carro e traga ele para a oficina',
         W / 2, H / 2 - 70, 18, c ? '#e2e8f0' : '#f87171', 'center');
   const repairPrice = c ? Math.round((100 - c.hp) * REPAIR_PRICE_PER_HP) : 0;
   [['[1] Pintura nova', '$' + PAINT_PRICE],
    ['[2] Turbo (+15% de velocidade máxima)', '$' + TURBO_PRICE],
-   ['[3] Reparar carro (vida cheia)', c && c.hp < 100 ? '$' + repairPrice : 'inteiro']]
+   ['[3] Reparar carro (vida cheia)', c && c.hp < 100 ? '$' + repairPrice : 'inteiro'],
+   ['[4] Blindagem (-15% de dano recebido)', '$' + ARMOR_PRICE]]
     .forEach(([name, price], i) => {
       const y = H / 2 - 20 + i * 56;
       ctx.fillStyle = 'rgba(20,20,50,.9)'; ctx.fillRect(W / 2 - 260, y - 22, 520, 46);
@@ -116,12 +138,12 @@ function drawOficinaOverlay() {
       label(name, W / 2 - 240, y + 6, 18, '#fff');
       label(price, W / 2 + 240, y + 6, 18, '#fb923c', 'right');
     });
-  label('Aperte 1, 2 ou 3 para usar   •   ESC ou E para sair', W / 2, H / 2 + 160, 16, '#94a3b8', 'center');
+  label('Aperte 1, 2, 3 ou 4 para usar   •   ESC ou E para sair', W / 2, H / 2 + 220, 16, '#94a3b8', 'center');
 }
 
 const _poisBase = mapPois;
 mapPois = function () {
   const L = _poisBase();
-  L.push({ key: 'oficina', name: 'Oficina (pintura, turbo e reparo)', icon: '🔧', col: '#fb923c', x: OF_DOOR.x, y: OF_DOOR.y });
+  L.push({ key: 'oficina', name: 'Oficina (pintura, turbo, blindagem e reparo)', icon: '🔧', col: '#fb923c', x: OF_DOOR.x, y: OF_DOOR.y });
   return L;
 };

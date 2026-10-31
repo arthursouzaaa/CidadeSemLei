@@ -1,11 +1,12 @@
 // ===== COMBATE ESPECIAL, EXPLOSIVOS E CAIXAS ELETRÔNICOS =====
-const ITEM_NAMES = { faca: 'Faca', bastao: 'Bastão', granada: 'Granada', molotov: 'Molotov', c4: 'C4' };
-const ITEM_KEYS = { Digit4: 'faca', Digit5: 'bastao', Digit6: 'granada', Digit7: 'molotov', Digit8: 'c4' };
+const ITEM_NAMES = { faca: 'Faca', bastao: 'Bastão', granada: 'Granada', molotov: 'Molotov' };
+const ITEM_KEYS = { Digit4: 'faca', Digit5: 'bastao', Digit6: 'granada', Digit7: 'molotov' };
 
 let grenades = [];
 let fires = [];
 let meleeFx = null;
 let atmProg = null;
+let atmMenu = null; // caixa aberto no menu (sacar/depositar)
 
 const ATMS = [[2, 2], [6, 3], [12, 7], [3, 11], [9, 13], [14, 10]].map(([i, j]) => ({
   x: i * CELL + RD + 8, y: j * CELL + RD + 8, used: false, cd: 0
@@ -55,7 +56,6 @@ function meleeAttack() {
 function throwItem() {
   const k = P.sel;
   if (!inv[k]) { P.sel = null; toast('Acabou ' + ITEM_NAMES[k] + '.'); return; }
-  if (k === 'c4') { toast('C4 se usa num caixa eletrônico (E perto de um).'); P.cd = .5; return; }
   const tx = camX + (mouse.x - W / 2) / camZ, ty = camY + (mouse.y - H / 2) / camZ;
   const dx = tx - P.x, dy = ty - P.y, d = hyp(dx, dy) || 1, f = Math.min(1, 320 / d);
   inv[k]--;
@@ -97,14 +97,22 @@ function updCombat(dt) {
   updAtm(dt);
 }
 
-function tryAtm() {
+// ----- CAIXA: menu de sacar/depositar (E) -----
+function atmOpenMenu() {
+  if (!bank.acc) { toast('Crie sua conta no banco primeiro (E no prédio do banco).'); return true; }
+  atmMenu = { a: nearAtm(), screen: 'menu', input: '' };
+  st = 'atm';
+  return true;
+}
+
+// ----- CAIXA: explosão com C4 (Q) -----
+function tryAtmBlast() {
   const a = nearAtm();
   if (!a) return false;
   if (atmProg) return true;
   if (a.used) { toast('Este caixa está sem dinheiro. Volte mais tarde.'); return true; }
-  if (!inv.c4) { toast('Você precisa de um explosivo. Compre na Ammu-Nation.'); return true; }
+  if (!inv.c4) { toast('Você precisa de C4. Compre na Ammu-Nation (R).'); return true; }
   inv.c4--;
-  if (!inv.c4 && P.sel === 'c4') P.sel = null;
   atmProg = { atm: a, t: 0, beep: 0 };
   toast('C4 plantada! Fique perto do caixa por 5 segundos.');
   saveGame();
@@ -118,7 +126,7 @@ function updAtm(dt) {
   const p = atmProg, [x, y] = atmC(p.atm);
   if (P.veh || hyp(P.x - x, P.y - y) > 80) {
     atmProg = null;
-    toast('Roubo cancelado: você se afastou do caixa.');
+    toast('Explosão cancelada: você se afastou do caixa.');
     snd(150, .2, 'square', .05);
     return;
   }
@@ -136,12 +144,40 @@ function detonateAtm(a) {
   for (const c of cars) if (!c.dead && hyp(c.x - x, c.y - y) < 60) c.hp -= 40 * c.armor;
   crime(2);
   a.used = true; a.cd = tm + 120;
-  const total = 200 + Math.round(R() * 300), parts = 4;
+  const total = 500 + Math.round(R() * 200), parts = 4;
   for (let k = 0; k < parts; k++)
     cash.push({ x: x + rnd(-28, 28), y: y + rnd(-28, 28), v: Math.round(total / parts) });
   toast('CAIXA ESTOURADO! Pegue o dinheiro no chão (+$' + total + ').');
   saveGame();
 }
+
+// Teclas do menu do caixa (sacar/depositar)
+addEventListener('keydown', e => {
+  if (st !== 'atm' || !atmMenu) return;
+  e.stopImmediatePropagation();
+  if (e.code === 'Escape') { st = 'play'; atmMenu = null; return; }
+  if (atmMenu.screen === 'menu') {
+    if (e.code === 'Digit1') { atmMenu.screen = 'sacar'; atmMenu.input = ''; atmMenu.msg = 'Quanto sacar? (Enter)'; }
+    if (e.code === 'Digit2') { atmMenu.screen = 'depositar'; atmMenu.input = ''; atmMenu.msg = 'Quanto depositar? (Enter)'; }
+    return;
+  }
+  if (e.code === 'Backspace') { atmMenu.input = atmMenu.input.slice(0, -1); return; }
+  if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+    const v = Number(atmMenu.input);
+    if (!v || v <= 0) { atmMenu.msg = 'Valor inválido.'; return; }
+    if (atmMenu.screen === 'sacar') {
+      if (bank.balance < v) { atmMenu.msg = 'Saldo insuficiente no banco.'; return; }
+      bank.balance -= v; money += v; atmMenu.msg = 'Sacado $' + v + '.';
+    } else {
+      if (money < v) { atmMenu.msg = 'Você não tem esse valor na carteira.'; return; }
+      money -= v; bank.balance += v; atmMenu.msg = 'Depositado $' + v + '.';
+    }
+    saveGame(); atmMenu.screen = 'menu'; atmMenu.input = '';
+    return;
+  }
+  const m = e.code.match(/^(Digit|Numpad)(\d)$/);
+  if (m && atmMenu.input.length < 7) atmMenu.input += m[2];
+});
 
 function drawAtms() {
   for (const a of ATMS) {
@@ -185,5 +221,22 @@ function drawAtmPrompt() {
     return;
   }
   const a = nearAtm(); if (!a) return;
-  label(a.used ? 'Caixa sem dinheiro' : '[E] Explodir caixa com C4', W / 2, H - 180, 18, '#f0abfc', 'center');
+  label(a.used ? 'Caixa sem dinheiro' : '[E] Sacar/depositar  •  [Q] Explodir com C4', W / 2, H - 180, 18, '#f0abfc', 'center');
+}
+
+function drawAtmOverlay() {
+  if (!atmMenu) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = 'rgba(2,6,23,.9)'; ctx.fillRect(0, 0, W, H);
+  label('CAIXA ELETRÔNICO', W / 2, H / 2 - 150, 36, '#f0abfc', 'center');
+  if (bank.acc) label('Saldo: $' + bank.balance.toLocaleString('pt-BR') + '   •   Carteira: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 16, '#e2e8f0', 'center');
+  if (atmMenu.screen === 'menu') {
+    label('[1] Sacar', W / 2, H / 2 - 40, 22, '#fff', 'center');
+    label('[2] Depositar', W / 2, H / 2, 22, '#fff', 'center');
+  } else {
+    label(atmMenu.screen === 'sacar' ? 'Sacar' : 'Depositar', W / 2, H / 2 - 40, 20, '#facc15', 'center');
+    label(atmMenu.input || '0', W / 2, H / 2 + 10, 40, '#fde047', 'center');
+  }
+  if (atmMenu.msg) label(atmMenu.msg, W / 2, H / 2 + 90, 18, '#fde68a', 'center');
+  label('ESC para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
 }

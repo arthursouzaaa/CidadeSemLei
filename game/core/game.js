@@ -10,7 +10,9 @@ function loop(t) {
     for (const p of PT) { p.l -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
     PT = PT.filter(p => p.l > 0);
     if (deadT > 3.5) {
-      P.hp = 100; P.x = SX; P.y = SY; P.iv = 2; wanted = 0; heatT = 0;
+      const rp = respawnPoint();
+      P.hp = 100; P.x = rp.x; P.y = rp.y; P.iv = 2; wanted = 0; heatT = 0;
+      camX = rp.x; camY = rp.y;
       applyDeathFine(500);
       saveGame();
       peds = peds.filter(p => !p.cop);

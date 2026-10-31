@@ -8,37 +8,54 @@
 <body>
   <canvas id="c"></canvas>
 
+  <!-- Libs Externas -->
   <script src="node_modules/howler/dist/howler.min.js"></script>
   <script src="node_modules/matter-js/build/matter.min.js"></script>
 
-  <script src="game/save.js"></script>
-  <script src="game/utils.js"></script>
-  <script src="game/audio.js"></script>
-  <script src="game/libs.js"></script>
-  <script src="game/world.js"></script>
-  <script src="game/decals.js"></script>
-  <script src="game/night.js"></script>
-  <script src="game/input.js"></script>
-  <script src="game/entities.js"></script>
-  <script src="game/barriers.js"></script>
-  <script src="game/heli.js"></script>
-  <script src="game/shop.js"></script>
-  <script src="game/combat.js"></script>
-  <script src="game/delivery.js"></script>
-  <script src="game/mapa.js"></script>
-  <script src="game/reactions.js"></script>
-  <script src="game/ambient.js"></script>
-  <script src="game/traffic.js"></script>
-  <script src="game/idle.js"></script>
-  <script src="game/news.js"></script>
-  <script src="game/district.js"></script>
-  <script src="game/tuning.js"></script>
-  <script src="game/bank.js"></script>
-  <script src="game/moto.js"></script>
-  <script src="game/walkers.js"></script>
-  <script src="game/physics_test.js"></script>
-  <script src="game/debug.js"></script>
-  <script src="game/render.js"></script>
-  <script src="game/game.js"></script>
+  <!-- CORE -->
+  <script src="game/core/utils.js"></script>
+  <script src="game/core/save.js"></script>
+  <script src="game/core/audio.js"></script>
+  <script src="game/dev/libs.js"></script>
+  <script src="game/core/input.js"></script>
+
+  <!-- WORLD -->
+  <script src="game/world/world.js"></script>
+  <script src="game/world/decals.js"></script>
+  <script src="game/world/night.js"></script>
+  <script src="game/world/traffic.js"></script>
+  <script src="game/world/district.js"></script>
+  <script src="game/world/physics_test.js"></script>
+
+  <!-- ENTITIES -->
+  <script src="game/entities/entities.js"></script>
+  <script src="game/entities/barriers.js"></script>
+  <script src="game/entities/heli.js"></script>
+  <script src="game/entities/walkers.js"></script>
+  <script src="game/entities/idle.js"></script>
+  <script src="game/entities/reactions.js"></script>
+  <script src="game/entities/moto.js"></script>
+
+  <!-- SYSTEMS -->
+  <script src="game/systems/combat.js"></script>
+  <script src="game/systems/delivery.js"></script>
+  <script src="game/systems/news.js"></script>
+  <script src="game/systems/ambient.js"></script>
+  <script src="game/systems/map.js"></script>
+
+  <!-- PLACES -->
+  <script src="game/places/shop.js"></script>
+  <script src="game/places/bank.js"></script>
+  <script src="game/places/safehouse.js"></script>
+  <script src="game/places/tuning.js"></script>
+  <script src="game/places/clothes.js"></script>
+  <script src="game/places/casino.js"></script>
+
+  <!-- DEV -->
+  <script src="game/dev/debug.js"></script>
+
+  <!-- RENDER & LOOP -->
+  <script src="game/core/render.js"></script>
+  <script src="game/core/game.js"></script>
 </body>
 </html>

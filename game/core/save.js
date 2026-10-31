@@ -4,6 +4,8 @@ const SAVE_OLD_KEY = 'cidadeSemLei_save_v1';
 let bank = { acc: null, pin: null, balance: 0 };
 let debt = 0;
 let look = { shirt: '#2563eb', pants: '#1f2937' };
+let houses = [];
+let spawnHouse = null;
 
 function saveGame() {
   try {
@@ -11,7 +13,7 @@ function saveGame() {
       v: 2,
       money, owned, garage, inv,
       ammo: ammo.map(a => a === Infinity ? -1 : a),
-      bank, debt, look,
+      bank, debt, look, houses, spawnHouse,
       run: {
         x: P ? Math.round(P.x) : SX, y: P ? Math.round(P.y) : SY,
         mission: mission ? { t: mission.t, r: mission.r } : null
@@ -29,6 +31,7 @@ function defaultSave() {
     inv: { faca: 0, bastao: 0, c4: 0, granada: 0, molotov: 0 },
     bank: { acc: null, pin: null, balance: 0 }, debt: 0,
     look: { shirt: '#2563eb', pants: '#1f2937' },
+    houses: [], spawnHouse: null,
     run: null
   };
 }
@@ -39,7 +42,9 @@ function cleanGarage(list) {
         model: g.model,
         col: typeof g.col === 'string' ? g.col : '#2563eb',
         hp: typeof g.hp === 'number' ? Math.max(1, Math.min(100, g.hp)) : 100,
-        turbo: Math.max(0, Math.min(3, Number(g.turbo) || 0))
+        turbo: Math.max(0, Math.min(3, Number(g.turbo) || 0)),
+        armorLevel: Math.max(0, Math.min(3, Number(g.armorLevel) || 0)),
+        armor: typeof g.armor === 'number' ? Math.max(0.1, g.armor) : 1
       }))
     : [];
 }
@@ -74,6 +79,8 @@ function loadGame() {
         shirt: typeof d.look?.shirt === 'string' ? d.look.shirt : defaults.look.shirt,
         pants: typeof d.look?.pants === 'string' ? d.look.pants : defaults.look.pants
       },
+      houses: Array.isArray(d.houses) ? d.houses.filter(id => typeof id === 'string') : [],
+      spawnHouse: typeof d.spawnHouse === 'string' ? d.spawnHouse : null,
       run: d.run && typeof d.run.x === 'number' ? d.run : null
     };
   } catch (e) {
@@ -87,7 +94,6 @@ function resetSave() {
   localStorage.removeItem(SAVE_OLD_KEY);
 }
 
-// Multa ao morrer: carteira → banco → dívida (que rende juros no banco)
 function applyDeathFine(amount) {
   let rest = amount;
   const fromWallet = Math.min(money, rest); money -= fromWallet; rest -= fromWallet;

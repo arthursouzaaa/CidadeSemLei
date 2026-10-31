@@ -15,7 +15,10 @@ function createWindow() {
     }
   });
   Menu.setApplicationMenu(null);
+
 win.loadFile('index.html');
+
+// DevTools é o de baixo, n mexer no de cima!!! 
 
 win.webContents.openDevTools();
 

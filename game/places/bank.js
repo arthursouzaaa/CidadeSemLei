@@ -10,34 +10,31 @@ blocks[BANK_CELL.j * N + BANK_CELL.i] = {
   bl: [{ x: BANK_RECT.x, y: BANK_RECT.y, w: BANK_RECT.w, h: BANK_RECT.h, z: 220, col: '#1e3a8a' }]
 };
 
-const DEBT_DAILY = 0.05; // juros de 5% ao dia de jogo sobre a dívida
-const BANK_AMOUNTS = [100, 500, 1000, 5000];
+const DEBT_DAILY = 0.05;
 
-let bankScreen = 'menu';  // 'menu' | 'conta' | 'senha' | 'depositar' | 'sacar' | 'extrato' | 'multas'
-let bankInput = '';        // dígitos digitados (senha ou valor)
-let bankNewPin = null;     // primeira digitação da senha, na criação da conta
+let bankScreen = 'menu';
+let bankInput = '';
+let bankNewPin = null;
 let bankMsg = '';
 
 function bankNear() { return !P.veh && hyp(P.x - BANK_DOOR.x, P.y - BANK_DOOR.y) < 70; }
 
-// Agência de 4 dígitos sorteada na criação
 function newAccountNumber() {
   return String(1000 + Math.floor(R() * 9000));
 }
 
-// Juros: aplicados em silêncio ao longo do tempo de jogo (1 dia = 24 h de jogo)
+// Juros salvos: lastInterestDay vai no save para não recontar ao reabrir o jogo
 let lastInterestDay = 0;
 function applyInterest() {
   const day = Math.floor(tm / 240);
-  if (debt > 0 && day > lastInterestDay) {
+  if (day <= lastInterestDay) return;
+  if (debt > 0) {
     const days = day - lastInterestDay;
     debt = Math.round(debt * Math.pow(1 + DEBT_DAILY, days));
-    lastInterestDay = day;
     toast('Juros da multa pendente: dívida agora $' + debt);
-    saveGame();
-  } else if (day > lastInterestDay) {
-    lastInterestDay = day;
   }
+  lastInterestDay = day;
+  saveGame();
 }
 
 function bankOpenMenu() { bankScreen = bank.acc ? 'menu' : 'conta'; bankInput = ''; bankNewPin = null; bankMsg = ''; st = 'bank'; }
@@ -84,7 +81,6 @@ function bankPayDebt(v) {
   bankMsg = 'Pago $' + pay + '. Dívida: $' + debt;
 }
 
-// Teclas do banco
 addEventListener('keydown', e => {
   if (st === 'play' && e.code === 'KeyE' && bankNear() && !garageAnim) { bankOpenMenu(); e.stopImmediatePropagation(); return; }
   if (st !== 'bank') return;
@@ -112,7 +108,6 @@ addEventListener('keydown', e => {
   if (m && bankInput.length < (bankScreen === 'depositar' || bankScreen === 'sacar' ? 7 : 4)) bankInput += m[2];
 });
 
-// Desenho
 function drawBankBuilding() {
   const b = BANK_RECT;
   ctx.fillStyle = '#93c5fd'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
@@ -158,3 +153,10 @@ function drawBankOverlay() {
   if (bankMsg) label(bankMsg, W / 2, H / 2 + 150, 18, '#fde68a', 'center');
   label('Enter confirmar  •  Backspace apagar  •  Esc sair', W / 2, H - 40, 14, '#94a3b8', 'center');
 }
+
+const _poisBank = mapPois;
+mapPois = function () {
+  const L = _poisBank();
+  L.push({ key: 'banco', name: 'Banco', icon: '🏦', col: '#93c5fd', x: BANK_DOOR.x, y: BANK_DOOR.y });
+  return L;
+};

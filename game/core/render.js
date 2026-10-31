@@ -56,13 +56,13 @@ function drawHeldWeapon(hx, hy) {
 
   ctx.save();
   ctx.translate(hx, hy); ctx.rotate(P.a);
-  if (key === -1 || key === undefined) {
-    // mão livre: punho com uma leve oscilação
-    const sw = Math.sin(tm * 6) * 1.5;
+    if (key === -1 || key === undefined) {
+    const sw = Math.sin(tm * 6) * 1.2;
     ctx.fillStyle = P.skin || '#d9a066';
-    ctx.beginPath(); ctx.arc(10 + sw, 0, 4, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(5 + sw, 4, 2.6, 0, TAU); ctx.fill();
     ctx.restore(); return;
   }
+
   const L = st0.len, x0 = 6 - recoil;
   ctx.fillStyle = st0.col;
   if (key === 0) { // pistola: corpo curto e cano
@@ -110,10 +110,10 @@ function drawPed(p) {
   ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(1, 2, 8, 6, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = p.col; ctx.beginPath(); ctx.ellipse(0, 0, 5, 8, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = p.skin; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, TAU); ctx.fill();
-  if (p.cop || p === P) { ctx.fillStyle = '#111'; ctx.fillRect(4, 2, 9, 3); }
   if (p.cop) { ctx.fillStyle = '#1e3a8a'; ctx.beginPath(); ctx.arc(0, 0, 4.6, Math.PI, TAU); ctx.fill(); }
   ctx.restore();
 }
+
 const WALL = ['#2b2f3d', '#232633', '#1c1e29', '#262a38'];
 function drawBld(b) {
   for (const q of b.bl) {
@@ -268,11 +268,14 @@ function draw() {
   drawAmmuBuilding();
   drawOficinaSign();
   drawBankBuilding();
+  drawHouses(vx0, vy0, vx1, vy1);
   drawRestaurants();
   drawAtms();
   drawCombat();
   drawDeliveryWorld();
   drawSavedRoute();
+  drawClothesBuilding();
+  drawCasinoBuilding();
   drawHeli();
 
   for (const p of PT) {
@@ -372,6 +375,9 @@ function hud() {
   drawDeliveryHud();
   drawOficinaHint();
   drawBankHint();
+  drawHouseHint();
+  drawClothesHint();
+  drawCasinoHint();
   drawDistrictName();
 }
 
@@ -404,5 +410,8 @@ function overlays() {
   if (st === 'mapa') drawMapa();
   if (st === 'oficina') drawOficinaOverlay();
   if (st === 'bank') drawBankOverlay();
+  if (st === 'atm') drawAtmOverlay();
+  if (st === 'clothes') drawClothesOverlay();
+  if (st === 'casino') drawCasinoOverlay();
   drawDebugMenu();
 }

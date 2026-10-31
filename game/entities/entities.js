@@ -17,7 +17,7 @@ function pickModel() {
   return r < .12 ? 'caminhao' : r < .27 ? 'esportivo' : 'sedan';
 }
 
-const GAR_CELL = { i: 5, j: 5 };
+const GAR_CELL = { i: 14, j: 12 }; // garagem na praia (orla)
 const GAR_BLD = {
   x: GAR_CELL.i * CELL + RD + 20, y: GAR_CELL.j * CELL + RD + 20,
   w: CELL - RD - 40, h: CELL - RD - 40
@@ -208,8 +208,9 @@ function onKey(c) {
     if (st === 'play') st = 'pause'; else if (st === 'pause') st = 'play';
     return;
   }
-    if (st !== 'play') return;
-  if (c === 'KeyE') { if (!tryAtm() && !tryRestaurant()) toggleVeh(); return; }
+      if (st !== 'play') return;
+  if (c === 'KeyQ') { tryAtmBlast(); return; }
+  if (c === 'KeyE') { if (tryHouse()) return; if (!nearAtm() || !atmOpenMenu()) { if (!tryRestaurant()) toggleVeh(); } return; }
   if (c === 'KeyG') garageAction();
   if (c === 'Digit0') { P.w = -1; P.sel = null; toast('Mão livre'); return; }
   if (c === 'Digit1' || c === 'Digit2' || c === 'Digit3') {
@@ -632,6 +633,7 @@ function update(dt) {
   P.iv -= dt; hurtF = Math.max(0, hurtF - dt); shake *= .9;
   updGarageAnim(dt);
   updBarriers(dt);
+  casinoUpdate(dt);
   updHeli(dt);
   updFireSpawn(dt);
   updVest(dt);
