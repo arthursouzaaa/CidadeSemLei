@@ -400,6 +400,8 @@ function overlays() {
     label('WASTED', W / 2, H / 2, Math.min(120, W / 8), '#dc2626', 'center');
     ctx.globalAlpha = 1;
   }
+  
+  // ==== CHAMADA DE TODOS OS MENUS PREMIUM ====
   if (st === 'shop') drawShopOverlay();
   if (st === 'ammu') drawAmmuOverlay();
   if (st === 'code') drawCodeOverlay();
@@ -409,5 +411,8 @@ function overlays() {
   if (st === 'atm') drawAtmOverlay();
   if (st === 'clothes') drawClothesOverlay();
   if (st === 'casino') drawCasinoOverlay();
+  
+  if (st === 'safehouse') drawSafehouseOverlay(); // <--- A LINHA MÁGICA AQUI
+
   drawDebugMenu();
 }

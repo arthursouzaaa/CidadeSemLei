@@ -208,9 +208,30 @@ function onKey(c) {
     if (st === 'play') st = 'pause'; else if (st === 'pause') st = 'play';
     return;
   }
-      if (st !== 'play') return;
+  if (st !== 'play') return;
   if (c === 'KeyQ') { tryAtmBlast(); return; }
-  if (c === 'KeyE') { if (tryHouse()) return; if (!nearAtm() || !atmOpenMenu()) { if (!tryRestaurant()) toggleVeh(); } return; }
+  
+  // A LINHA DO E RESTAURADA PARA O ORIGINAL:
+  if (c === 'KeyE') { 
+  console.log("--- APERTOU E ---");
+  
+  if (typeof tryHouse === 'function') {
+    console.log("Função tryHouse existe.");
+    const result = tryHouse();
+    console.log("Resultado do tryHouse:", result);
+    if (result) return;
+  } else {
+    console.log("ERRO: Função tryHouse NÃO EXISTE no escopo global.");
+  }
+
+  if (!nearAtm() || !atmOpenMenu()) { 
+    if (typeof tryRestaurant === 'function' && tryRestaurant()) return;
+    console.log("Tentando entrar no carro...");
+    toggleVeh(); 
+  } 
+  return; 
+}
+  
   if (c === 'KeyG') garageAction();
   if (c === 'Digit0') { P.w = -1; P.sel = null; toast('Mão livre'); return; }
   if (c === 'Digit1' || c === 'Digit2' || c === 'Digit3') {

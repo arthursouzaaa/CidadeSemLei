@@ -1,6 +1,3 @@
-// ===== ZOOM DA CÂMERA =====
-const ZOOM_BASE = 1.25;
-
 // ===== OFICINA: pintura, turbo, blindagem e reparo =====
 const OF_CELL = { i: 13, j: 3 };
 const OF_RECT = {
@@ -15,10 +12,10 @@ blocks[OF_CELL.j * N + OF_CELL.i] = {
 
 const PAINT_PRICE = 500, TURBO_PRICE = 1000, TURBO_MAX = 3, TURBO_STEP = 0.15;
 const REPAIR_PRICE_PER_HP = 3;
-const ARMOR_PRICE = 1500, ARMOR_MAX = 3, ARMOR_STEP = 0.15; // <-- NOVO
+const ARMOR_PRICE = 1500, ARMOR_MAX = 3, ARMOR_STEP = 0.15;
+let oficinaAnimTimer = 0;
 
 function oficinaNearAny() { return hyp(P.x - OF_DOOR.x, P.y - OF_DOOR.y) < 70; }
-
 function applyTurbo(c) { c.max = MODELS[c.model].max * (1 + TURBO_STEP * (c.turbo || 0)); }
 
 function oficinaPaint() {
@@ -67,6 +64,7 @@ addEventListener('keydown', e => {
   if (st === 'play' && e.code === 'KeyE' && oficinaNearAny() && !garageAnim) {
     if (!P.veh) { toast('Entre num carro para usar a oficina.'); return; }
     st = 'oficina';
+    oficinaAnimTimer = 0;
     e.stopImmediatePropagation();
     return;
   }
@@ -78,6 +76,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Digit4') { oficinaArmor(); e.stopImmediatePropagation(); }
 });
 
+// Garagem e animações de salvamento
 const _finishGarageBase = finishGarage;
 finishGarage = function () {
   const a = garageAnim;
@@ -86,12 +85,7 @@ finishGarage = function () {
   if (!a) return;
   if (a.mode === 'in') {
     const g = garage[garage.length - 1];
-    if (g) { 
-      g.turbo = a.car.turbo || 0; 
-      g.col = a.car.col; 
-      g.armorLevel = a.car.armorLevel || 0;
-      g.armor = a.car.armor;
-    }
+    if (g) { g.turbo = a.car.turbo || 0; g.col = a.car.col; g.armorLevel = a.car.armorLevel || 0; g.armor = a.car.armor; }
     saveGame();
   } else if (outG) {
     const c = cars[cars.length - 1];
@@ -118,32 +112,93 @@ function drawOficinaHint() {
 }
 
 function drawOficinaOverlay() {
+  if (oficinaAnimTimer < 1) oficinaAnimTimer += 0.1;
+  const animScale = 0.95 + (0.05 * oficinaAnimTimer);
+
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = 'rgba(0,0,10,.75)'; ctx.fillRect(0, 0, W, H);
-  label('OFICINA', W / 2, H / 2 - 150, 48, '#fb923c', 'center');
-  label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 20, '#facc15', 'center');
+  ctx.fillStyle = 'rgba(0, 0, 5, 0.75)'; ctx.fillRect(0, 0, W, H);
+
+  const bw = 680, bh = 560;
+  const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  ctx.scale(animScale, animScale);
+  ctx.translate(-W/2, -H/2);
+
+  drawPremiumPanel(bx, by, bw, bh, '#fb923c');
+
+  const cx = W / 2;
+  let startY = by + 70;
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fb923c';
+  ctx.font = 'bold 32px "Segoe UI", sans-serif';
+  ctx.shadowColor = '#fb923c'; ctx.shadowBlur = 10;
+  ctx.fillText('🔧 OFICINA', cx, startY);
+  ctx.shadowBlur = 0;
+  
+  ctx.font = '14px "Consolas", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('TUNING E PERFORMANCE', cx, startY + 20);
+
   const c = P.veh;
-  label(c ? MODELS[c.model].n + '  •  turbo ' + (c.turbo || 0) + '/' + TURBO_MAX + '  •  blindagem ' + (c.armorLevel || 0) + '/' + ARMOR_MAX
-          : 'Entre num carro e traga ele para a oficina',
-        W / 2, H / 2 - 70, 18, c ? '#e2e8f0' : '#f87171', 'center');
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.roundRect(bx + 40, startY + 40, bw - 80, 60, 12); ctx.fill();
+  
+  if (c) {
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px "Consolas", monospace'; ctx.fillStyle = '#fff';
+    ctx.fillText(MODELS[c.model].n.toUpperCase(), bx + 60, startY + 75);
+    
+    ctx.textAlign = 'right';
+    ctx.font = '16px "Consolas", monospace';
+    ctx.fillStyle = '#fb923c';
+    ctx.fillText('TURBO: ' + (c.turbo || 0) + '/' + TURBO_MAX + '  |  BLINDAGEM: ' + (c.armorLevel || 0) + '/' + ARMOR_MAX, bx + bw - 60, startY + 75);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.font = '16px "Segoe UI", sans-serif'; ctx.fillStyle = '#f87171';
+    ctx.fillText('ENTRE NUM CARRO E TRAGA ELE PARA A OFICINA', cx, startY + 75);
+  }
+
+  startY += 120;
+
   const repairPrice = c ? Math.round((100 - c.hp) * REPAIR_PRICE_PER_HP) : 0;
-  [['[1] Pintura nova', '$' + PAINT_PRICE],
-   ['[2] Turbo (+15% de velocidade máxima)', '$' + TURBO_PRICE],
-   ['[3] Reparar carro (vida cheia)', c && c.hp < 100 ? '$' + repairPrice : 'inteiro'],
-   ['[4] Blindagem (-15% de dano recebido)', '$' + ARMOR_PRICE]]
-    .forEach(([name, price], i) => {
-      const y = H / 2 - 20 + i * 56;
-      ctx.fillStyle = 'rgba(20,20,50,.9)'; ctx.fillRect(W / 2 - 260, y - 22, 520, 46);
-      ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 2; ctx.strokeRect(W / 2 - 260, y - 22, 520, 46);
-      label(name, W / 2 - 240, y + 6, 18, '#fff');
-      label(price, W / 2 + 240, y + 6, 18, '#fb923c', 'right');
-    });
-  label('Aperte 1, 2, 3 ou 4 para usar   •   ESC ou E para sair', W / 2, H / 2 + 220, 16, '#94a3b8', 'center');
+  const options = [
+    { icon: '🎨', text: 'PINTURA NOVA', key: '[1]', color: '#38bdf8', price: '$' + PAINT_PRICE, action: oficinaPaint },
+    { icon: '🔥', text: 'TURBO (+15% Vel. Máx)', key: '[2]', color: '#fb923c', price: '$' + TURBO_PRICE, action: oficinaTurbo },
+    { icon: '🛠️', text: 'REPARAR CARRO', key: '[3]', color: '#4ade80', price: c && c.hp < 100 ? '$' + repairPrice : 'INTEIRO', action: oficinaRepair },
+    { icon: '🛡️', text: 'BLINDAGEM (-15% Dano)', key: '[4]', color: '#cbd5e1', price: '$' + ARMOR_PRICE, action: oficinaArmor }
+  ];
+
+  options.forEach((opt, i) => {
+    const oy = startY + i * 70;
+    drawPremiumButton(bx + 50, oy, bw - 100, 56, opt.key, opt.text, opt.price, opt.color, opt.icon);
+    if (mouse.clicked && mouseInRect(mouse.x, mouse.y, bx + 50, oy, bw - 100, 56)) {
+      opt.action();
+      mouse.clicked = false;
+    }
+  });
+
+  ctx.restore();
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#475569'; ctx.font = '14px "Consolas", monospace';
+  ctx.fillText('ESC: SAIR', cx, by + bh - 25);
 }
+
+addEventListener('mousedown', e => {
+  if (st === 'oficina' && e.button === 0) {
+    const bw = 680, bh = 560;
+    const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+    if (!mouseInRect(e.clientX, e.clientY, bx, by, bw, bh)) {
+      st = 'play';
+    }
+  }
+});
 
 const _poisBase = mapPois;
 mapPois = function () {
   const L = _poisBase();
-  L.push({ key: 'oficina', name: 'Oficina (pintura, turbo, blindagem e reparo)', icon: '🔧', col: '#fb923c', x: OF_DOOR.x, y: OF_DOOR.y });
+  L.push({ key: 'oficina', name: 'Oficina', icon: '🔧', col: '#fb923c', x: OF_DOOR.x, y: OF_DOOR.y });
   return L;
 };

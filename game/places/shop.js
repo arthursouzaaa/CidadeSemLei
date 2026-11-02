@@ -27,30 +27,10 @@ function shopNear() { return !P.veh && hyp(P.x - SHOP_DOOR.x, P.y - SHOP_DOOR.y)
 
 function shopList() {
   return [
-    {
-      name: () => 'Kit médico (vida cheia)',
-      price: () => 120,
-      check: () => P.hp >= 100 ? 'Sua vida já está cheia' : '',
-      run() { P.hp = 100; }
-    },
-    {
-      name: () => 'Curativo (+40 de vida)',
-      price: () => 60,
-      check: () => P.hp >= 100 ? 'Sua vida já está cheia' : '',
-      run() { P.hp = Math.min(100, P.hp + 40); }
-    },
-    {
-      name: () => 'Colete balístico (60 s, vida máx 150)',
-      price: () => 400,
-      check: () => '',
-      run() { P.hp = Math.min(150, P.hp + 50); vestEnd = tm + 60; }
-    },
-    {
-      name: () => 'Celular (em breve)',
-      price: () => 0,
-      check: () => 'Ainda não disponível',
-      run() {}
-    }
+    { name: () => 'Kit médico (vida cheia)', price: () => 120, check: () => P.hp >= 100 ? 'Sua vida já está cheia' : '', run() { P.hp = 100; } },
+    { name: () => 'Curativo (+40 de vida)', price: () => 60, check: () => P.hp >= 100 ? 'Sua vida já está cheia' : '', run() { P.hp = Math.min(100, P.hp + 40); } },
+    { name: () => 'Colete balístico (60 s, vida máx 150)', price: () => 400, check: () => '', run() { P.hp = Math.min(150, P.hp + 50); vestEnd = tm + 60; } },
+    { name: () => 'Celular (em breve)', price: () => 0, check: () => 'Ainda não disponível', run() {} }
   ];
 }
 
@@ -61,10 +41,7 @@ function shopBuy(i) {
   if (err) { toast(err); return; }
   const p = it.price();
   if (money < p) { toast('Dinheiro insuficiente ($' + p + ')'); snd(150, .2, 'square', .05); return; }
-  money -= p;
-  it.run();
-  saveGame();
-  snd(900, .1, 'sine', .05, 300);
+  money -= p; it.run(); saveGame(); snd(900, .1, 'sine', .05, 300);
   toast('Comprado: ' + it.name() + ' (-$' + p + ')');
 }
 
@@ -72,31 +49,19 @@ const AMMU_WARN = 'Isso aqui é coisa do crime, parceiro. Se a polícia te pegar
 
 function ammuNear() { return !P.veh && hyp(P.x - AM_DOOR.x, P.y - AM_DOOR.y) < 70; }
 
-// Armas e munições: só na Ammu-Nation. Armas são compradas uma vez; munições são lotes.
 function ammuList() {
   return [
-    { name: 'Pistola', price: 2000, crime: 0, need: () => owned[0] ? 'Você já tem a pistola' : '',
-      run() { owned[0] = true; ammo[0] = Infinity; } },
-    { name: 'Munição Pistola (+30)', price: 150, crime: 0, need: () => owned[0] ? '' : 'Compre a pistola primeiro',
-      run() { ammo[0] = Infinity; } },
-    { name: 'SMG', price: 8000, crime: 0, need: () => owned[1] ? 'Você já tem a SMG' : '',
-      run() { owned[1] = true; ammo[1] += 60; } },
-    { name: 'Munição SMG (+60)', price: 300, crime: 0, need: () => owned[1] ? '' : 'Compre a SMG primeiro',
-      run() { ammo[1] += 60; } },
-    { name: 'Escopeta', price: 12000, crime: 0, need: () => owned[2] ? 'Você já tem a escopeta' : '',
-      run() { owned[2] = true; ammo[2] += 12; } },
-    { name: 'Munição Escopeta (+12)', price: 400, crime: 0, need: () => owned[2] ? '' : 'Compre a escopeta primeiro',
-      run() { ammo[2] += 12; } },
-    { name: 'Faca (silenciosa)', price: 200, crime: 0, need: () => '',
-      run() { inv.faca++; } },
-    { name: 'Bastão', price: 120, crime: 0, need: () => '',
-      run() { inv.bastao++; } },
-    { name: 'C4', price: 800, crime: 2, need: () => '',
-      run() { inv.c4++; } },
-    { name: 'Granada', price: 400, crime: 2, need: () => '',
-      run() { inv.granada++; } },
-    { name: 'Molotov', price: 250, crime: 1, need: () => '',
-      run() { inv.molotov++; } }
+    { name: 'Pistola', price: 2000, crime: 0, need: () => owned[0] ? 'Você já tem a pistola' : '', run() { owned[0] = true; ammo[0] = Infinity; } },
+    { name: 'Munição Pistola (+30)', price: 150, crime: 0, need: () => owned[0] ? '' : 'Compre a pistola primeiro', run() { ammo[0] = Infinity; } },
+    { name: 'SMG', price: 8000, crime: 0, need: () => owned[1] ? 'Você já tem a SMG' : '', run() { owned[1] = true; ammo[1] += 60; } },
+    { name: 'Munição SMG (+60)', price: 300, crime: 0, need: () => owned[1] ? '' : 'Compre a SMG primeiro', run() { ammo[1] += 60; } },
+    { name: 'Escopeta', price: 12000, crime: 0, need: () => owned[2] ? 'Você já tem a escopeta' : '', run() { owned[2] = true; ammo[2] += 12; } },
+    { name: 'Munição Escopeta (+12)', price: 400, crime: 0, need: () => owned[2] ? '' : 'Compre a escopeta primeiro', run() { ammo[2] += 12; } },
+    { name: 'Faca (silenciosa)', price: 200, crime: 0, need: () => '', run() { inv.faca++; } },
+    { name: 'Bastão', price: 120, crime: 0, need: () => '', run() { inv.bastao++; } },
+    { name: 'C4', price: 800, crime: 2, need: () => '', run() { inv.c4++; } },
+    { name: 'Granada', price: 400, crime: 2, need: () => '', run() { inv.granada++; } },
+    { name: 'Molotov', price: 250, crime: 1, need: () => '', run() { inv.molotov++; } }
   ];
 }
 
@@ -106,10 +71,7 @@ function ammuBuy(i) {
   const err = it.need();
   if (err) { toast(err); return; }
   if (money < it.price) { toast('Dinheiro insuficiente ($' + it.price + ')'); snd(150, .2, 'square', .05); return; }
-  money -= it.price;
-  it.run();
-  saveGame();
-  snd(900, .1, 'sine', .05, 300);
+  money -= it.price; it.run(); saveGame(); snd(900, .1, 'sine', .05, 300);
   if (it.crime) { crime(it.crime); toast(AMMU_WARN); }
   else toast('Comprado: ' + it.name + ' (-$' + it.price + ')');
 }
@@ -123,7 +85,6 @@ function updVest() {
 }
 
 addEventListener('keydown', e => {
-  // Abrir: E perto da porta (play)
   if (st === 'play' && e.code === 'KeyE' && shopNear()) { st = 'shop'; return; }
   if (st === 'shop') {
     if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
@@ -167,33 +128,79 @@ function drawAmmuPrompt() {
 
 function drawShopOverlay() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = 'rgba(0,0,10,.75)'; ctx.fillRect(0, 0, W, H);
-  label('LOJA', W / 2, H / 2 - 150, 48, '#4ade80', 'center');
-  label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 20, '#facc15', 'center');
+  ctx.fillStyle = 'rgba(0, 0, 5, 0.7)'; ctx.fillRect(0, 0, W, H);
+  const bw = 640, bh = 480;
+  const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+  const cx = W / 2;
+  let startY = by + 100;
+  drawUICard(bx, by, bw, bh, '🛒 LOJA', '#4ade80');
+  ctx.textAlign = 'center'; ctx.fillStyle = '#facc15'; ctx.font = 'bold 20px "Segoe UI", sans-serif';
+  ctx.fillText('Dinheiro: $' + money.toLocaleString('pt-BR'), cx, startY - 20);
+  startY += 20;
+  
   shopList().forEach((it, i) => {
-    const y = H / 2 - 60 + i * 56, err = it.check();
-    ctx.fillStyle = 'rgba(20,20,50,.9)'; ctx.fillRect(W / 2 - 260, y - 22, 520, 46);
-    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.strokeRect(W / 2 - 260, y - 22, 520, 46);
-    label('[' + (i + 1) + '] ' + it.name(), W / 2 - 240, y + 6, 18, '#fff');
-    label(err || ('$' + it.price()), W / 2 + 240, y + 6, 18, err ? '#f87171' : '#4ade80', 'right');
+    const oy = startY + i * 60;
+    const err = it.check();
+    drawUIButton(bx + 40, oy, bw - 80, 50, '[' + (i + 1) + ']', it.name(), err || ('$' + it.price()), err ? '#64748b' : '#4ade80', '');
+    if (mouse.clicked && mouseInRect(mouse.x, mouse.y, bx + 40, oy, bw - 80, 50)) {
+      if (!err) shopBuy(i);
+      mouse.clicked = false;
+    }
   });
-  label('Aperte 1-4 para comprar   •   ESC ou E para sair', W / 2, H / 2 + 230, 16, '#94a3b8', 'center');
+  ctx.textAlign = 'center'; ctx.fillStyle = '#64748b'; ctx.font = '14px "Segoe UI", sans-serif';
+  ctx.fillText('ESC ou E para sair', cx, by + bh - 25);
 }
 
 function drawAmmuOverlay() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = 'rgba(10,12,6,.85)'; ctx.fillRect(0, 0, W, H);
-  label('AMMU-NATION', W / 2, H / 2 - 190, 46, '#a3e635', 'center');
-  label('"Aqui é só pra quem sabe o que quer."', W / 2, H / 2 - 152, 16, '#94a3b8', 'center');
-  label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 120, 18, '#facc15', 'center');
+  ctx.fillStyle = 'rgba(0, 0, 5, 0.8)'; ctx.fillRect(0, 0, W, H);
+  const bw = 640, bh = 640;
+  const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+  const cx = W / 2;
+  let startY = by + 100;
+  drawUICard(bx, by, bw, bh, '🔫 AMMU-NATION', '#a3e635');
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#facc15'; ctx.font = 'bold 20px "Segoe UI", sans-serif';
+  ctx.fillText('Dinheiro: $' + money.toLocaleString('pt-BR'), cx, startY - 20);
+  ctx.font = 'italic 14px "Segoe UI", sans-serif'; ctx.fillStyle = '#94a3b8';
+  ctx.fillText('"Aqui é só pra quem sabe o que quer."', cx, startY + 5);
+  startY += 30;
+
   ammuList().forEach((it, i) => {
-    const y = H / 2 - 82 + i * 30, err = it.need();
-    ctx.fillStyle = 'rgba(31,38,20,.95)'; ctx.fillRect(W / 2 - 300, y - 16, 600, 26);
-    ctx.strokeStyle = it.crime ? '#b45309' : '#65a30d'; ctx.lineWidth = 2;
-    ctx.strokeRect(W / 2 - 300, y - 16, 600, 26);
-    label('[' + (i + 1) + '] ' + it.name, W / 2 - 280, y + 3, 14, '#ecfccb');
-    label(err || ('$' + it.price), W / 2 + 280, y + 3, 14, err ? '#f87171' : '#a3e635', 'right');
+    const oy = startY + i * 42;
+    const err = it.need();
+    const col = it.crime ? '#f87171' : '#a3e635';
+    const prefix = it.crime ? '⚠️ ' : '';
+    
+    const hover = mouseInRect(mouse.x, mouse.y, bx + 40, oy, bw - 80, 36);
+    ctx.fillStyle = hover ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.roundRect(bx + 40, oy, bw - 80, 36, 8); ctx.fill();
+    ctx.fillStyle = err ? '#475569' : col;
+    ctx.beginPath(); ctx.roundRect(bx + 40, oy, 6, 36, [8, 0, 0, 8]); ctx.fill();
+
+    ctx.textAlign = 'left'; ctx.fillStyle = err ? '#94a3b8' : '#fff'; ctx.font = 'bold 15px "Segoe UI", sans-serif';
+    ctx.fillText('[' + (i + 1) + '] ' + prefix + it.name, bx + 65, oy + 23);
+    ctx.textAlign = 'right'; ctx.fillStyle = err ? '#ef4444' : col; ctx.font = '14px "Segoe UI", sans-serif';
+    ctx.fillText(err || ('$' + it.price), bx + bw - 60, oy + 23);
+
+    if (mouse.clicked && hover && !err) {
+      ammuBuy(i);
+      mouse.clicked = false;
+    }
   });
-  label('Itens em laranja são ilegais: compre e a polícia vem atrás.', W / 2, H / 2 + 236, 15, '#fb923c', 'center');
-  label('Aperte 1-9 para comprar   •   ESC ou E para sair', W / 2, H / 2 + 262, 16, '#94a3b8', 'center');
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fb923c'; ctx.font = '14px "Segoe UI", sans-serif';
+  ctx.fillText('Itens com ⚠️ são ilegais e aumentam o nível de procurado.', cx, by + bh - 50);
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('ESC ou E para sair', cx, by + bh - 25);
 }
+
+addEventListener('mousedown', e => {
+  if ((st === 'shop' || st === 'ammu') && e.button === 0) {
+    let bw = 640, bh = st === 'shop' ? 480 : 640;
+    const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+    if (!mouseInRect(e.clientX, e.clientY, bx, by, bw, bh)) {
+      st = 'play';
+    }
+  }
+});
