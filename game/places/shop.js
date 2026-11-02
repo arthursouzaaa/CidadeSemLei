@@ -123,15 +123,17 @@ function updVest() {
 }
 
 addEventListener('keydown', e => {
-  if (st === 'play' && e.code === 'KeyF' && shopNear()) { st = 'shop'; return; }
+  // Abrir: E perto da porta (play)
+  if (st === 'play' && e.code === 'KeyE' && shopNear()) { st = 'shop'; return; }
   if (st === 'shop') {
-    if (e.code === 'Escape' || e.code === 'KeyF') { st = 'play'; return; }
+    if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
     const map = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3 };
     if (e.code in map) shopBuy(map[e.code]);
+    return;
   }
-  if (st === 'play' && e.code === 'KeyR' && ammuNear()) { st = 'ammu'; return; }
+  if (st === 'play' && e.code === 'KeyE' && ammuNear()) { st = 'ammu'; return; }
   if (st === 'ammu') {
-    if (e.code === 'Escape' || e.code === 'KeyR') { st = 'play'; return; }
+    if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
     const i = AMMU_KEYS.indexOf(e.code);
     if (i >= 0) ammuBuy(i);
   }
@@ -160,7 +162,7 @@ function drawAmmuBuilding() {
 }
 
 function drawAmmuPrompt() {
-  if (st === 'play' && ammuNear()) label('[R] Entrar na Ammu-Nation', W / 2, H - 150, 18, '#a3e635', 'center');
+  if (st === 'play' && ammuNear()) label('[E] Entrar na Ammu-Nation', W / 2, H - 150, 18, '#a3e635', 'center');
 }
 
 function drawShopOverlay() {
@@ -175,7 +177,7 @@ function drawShopOverlay() {
     label('[' + (i + 1) + '] ' + it.name(), W / 2 - 240, y + 6, 18, '#fff');
     label(err || ('$' + it.price()), W / 2 + 240, y + 6, 18, err ? '#f87171' : '#4ade80', 'right');
   });
-  label('Aperte 1-4 para comprar   •   ESC ou F para sair', W / 2, H / 2 + 230, 16, '#94a3b8', 'center');
+  label('Aperte 1-4 para comprar   •   ESC ou E para sair', W / 2, H / 2 + 230, 16, '#94a3b8', 'center');
 }
 
 function drawAmmuOverlay() {
@@ -193,5 +195,5 @@ function drawAmmuOverlay() {
     label(err || ('$' + it.price), W / 2 + 280, y + 3, 14, err ? '#f87171' : '#a3e635', 'right');
   });
   label('Itens em laranja são ilegais: compre e a polícia vem atrás.', W / 2, H / 2 + 236, 15, '#fb923c', 'center');
-  label('Aperte 1-9 para comprar   •   ESC ou R para sair', W / 2, H / 2 + 262, 16, '#94a3b8', 'center');
+  label('Aperte 1-9 para comprar   •   ESC ou E para sair', W / 2, H / 2 + 262, 16, '#94a3b8', 'center');
 }

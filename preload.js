@@ -1,1 +1,3 @@
-// Arquivo vazio, usado apenas para segurança do Electron.
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('Preload script carregado com sucesso!');
+});

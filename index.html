@@ -8,40 +8,41 @@
 <body>
   <canvas id="c"></canvas>
 
-  <!-- Libs Externas -->
+  <!-- Libs -->
   <script src="node_modules/howler/dist/howler.min.js"></script>
   <script src="node_modules/matter-js/build/matter.min.js"></script>
 
-  <!-- CORE -->
+  <!-- CORE BASE -->
   <script src="game/core/utils.js"></script>
   <script src="game/core/save.js"></script>
   <script src="game/core/audio.js"></script>
   <script src="game/dev/libs.js"></script>
   <script src="game/core/input.js"></script>
 
-  <!-- WORLD -->
+  <!-- MUNDO BASE -->
   <script src="game/world/world.js"></script>
   <script src="game/world/decals.js"></script>
   <script src="game/world/night.js"></script>
   <script src="game/world/traffic.js"></script>
-  <script src="game/world/district.js"></script>
-  <script src="game/world/physics_test.js"></script>
-
-  <!-- ENTITIES -->
+  
+  <!-- ENTITIES BASE -->
   <script src="game/entities/entities.js"></script>
+
+  <!-- SISTEMAS (Delivery e outros precisam vir antes do moto) -->
+  <script src="game/systems/delivery.js"></script>
+  <script src="game/systems/combat.js"></script>
+  <script src="game/systems/news.js"></script>
+  <script src="game/systems/ambient.js"></script>
+  <script src="game/systems/mapa.js"></script>
+
+  <!-- EXTENSÕES DO MUNDO E ENTITIES -->
+  <script src="game/world/district.js"></script>
   <script src="game/entities/barriers.js"></script>
   <script src="game/entities/heli.js"></script>
   <script src="game/entities/walkers.js"></script>
   <script src="game/entities/idle.js"></script>
   <script src="game/entities/reactions.js"></script>
   <script src="game/entities/moto.js"></script>
-
-  <!-- SYSTEMS -->
-  <script src="game/systems/combat.js"></script>
-  <script src="game/systems/delivery.js"></script>
-  <script src="game/systems/news.js"></script>
-  <script src="game/systems/ambient.js"></script>
-  <script src="game/systems/map.js"></script>
 
   <!-- PLACES -->
   <script src="game/places/shop.js"></script>
@@ -51,10 +52,12 @@
   <script src="game/places/clothes.js"></script>
   <script src="game/places/casino.js"></script>
 
-  <!-- DEV -->
+  <!-- INTERAÇÃO E DEBUG -->
+  <script src="game/core/interact.js"></script>
   <script src="game/dev/debug.js"></script>
+  <script src="game/world/physics_test.js"></script>
 
-  <!-- RENDER & LOOP -->
+  <!-- RENDER E GAME (O Game.js DEVE SER O ÚLTIMO) -->
   <script src="game/core/render.js"></script>
   <script src="game/core/game.js"></script>
 </body>

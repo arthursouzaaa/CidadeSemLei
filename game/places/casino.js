@@ -22,6 +22,7 @@ function casinoOpen() {
 }
 
 function casinoSpin() {
+  if (!casinoState || casinoState.spinning) return;
   if (money < CASINO_BET) { casinoState.msg = 'Sem dinheiro para apostar $' + CASINO_BET; return; }
   money -= CASINO_BET;
   casinoState.spinning = true;
@@ -55,9 +56,9 @@ function casinoUpdate(dt) {
 }
 
 addEventListener('keydown', e => {
-  if (st === 'play' && e.code === 'KeyU' && casinoNear()) { casinoOpen(); return; }
+  if (st === 'play' && e.code === 'KeyE' && casinoNear()) { casinoOpen(); return; }
   if (st === 'casino') {
-    if (e.code === 'Escape' || e.code === 'KeyU') { st = 'play'; casinoState = null; return; }
+    if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; casinoState = null; return; }
     if (e.code === 'Digit1') casinoSpin();
   }
 });
@@ -72,7 +73,7 @@ function drawCasinoBuilding() {
 }
 
 function drawCasinoHint() {
-  if (st === 'play' && casinoNear()) label('[U] Entrar no cassino', W / 2, H - 210, 18, '#fca5a5', 'center');
+  if (st === 'play' && casinoNear()) label('[E] Entrar no cassino', W / 2, H - 210, 18, '#fca5a5', 'center');
 }
 
 function drawCasinoOverlay() {
@@ -94,7 +95,7 @@ function drawCasinoOverlay() {
   }
   label('[1] Girar ($' + CASINO_BET + ')', W / 2, H / 2 + 80, 22, '#fff', 'center');
   if (casinoState.msg) label(casinoState.msg, W / 2, H / 2 + 130, 18, '#fde68a', 'center');
-  label('ESC ou U para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
+  label('ESC ou E para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
 }
 
 const _poisCasino = mapPois;

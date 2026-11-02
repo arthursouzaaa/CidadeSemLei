@@ -36,9 +36,9 @@ function clothesBuyPants() {
 }
 
 addEventListener('keydown', e => {
-  if (st === 'play' && e.code === 'KeyT' && clothesNear()) { st = 'clothes'; return; }
+  if (st === 'play' && e.code === 'KeyE' && clothesNear()) { st = 'clothes'; return; }
   if (st === 'clothes') {
-    if (e.code === 'Escape' || e.code === 'KeyT') { st = 'play'; return; }
+    if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
     if (e.code === 'Digit1') clothesBuyShirt();
     if (e.code === 'Digit2') clothesBuyPants();
   }
@@ -54,7 +54,7 @@ function drawClothesBuilding() {
 }
 
 function drawClothesHint() {
-  if (st === 'play' && clothesNear()) label('[T] Entrar na loja de roupas', W / 2, H - 180, 18, '#c4b5fd', 'center');
+  if (st === 'play' && clothesNear()) label('[E] Entrar na loja de roupas', W / 2, H - 180, 18, '#c4b5fd', 'center');
 }
 
 function drawClothesOverlay() {
@@ -64,7 +64,7 @@ function drawClothesOverlay() {
   label('Dinheiro: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 20, '#facc15', 'center');
   label('[1] Camisa (muda a cor do personagem) - $' + CLOTHES_PRICE, W / 2, H / 2 - 40, 22, '#fff', 'center');
   label('[2] Calça (muda a cor das pernas) - $' + CLOTHES_PRICE, W / 2, H / 2 + 10, 22, '#fff', 'center');
-  label('ESC ou T para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
+  label('ESC ou E para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
 }
 
 const _poisClothes = mapPois;

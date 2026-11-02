@@ -14,6 +14,8 @@ function saveGame() {
       money, owned, garage, inv,
       ammo: ammo.map(a => a === Infinity ? -1 : a),
       bank, debt, look, houses, spawnHouse,
+      gameTime: tm,                 // relógio do jogo (dia/noite)
+      interestDay: lastInterestDay, // último dia em que os juros foram aplicados
       run: {
         x: P ? Math.round(P.x) : SX, y: P ? Math.round(P.y) : SY,
         mission: mission ? { t: mission.t, r: mission.r } : null
@@ -22,6 +24,21 @@ function saveGame() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch (e) {
     console.warn('Não foi possível salvar:', e);
+  }
+}
+
+// Restaura o relógio e o contador de juros, para não recontar dias ao reabrir
+function restoreClock() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    const d = raw ? JSON.parse(raw) : null;
+    if (d && typeof d.gameTime === 'number') {
+      tm = Math.max(0, d.gameTime);
+      tod = (9 + tm / 10) % 24;
+    }
+    lastInterestDay = Math.max(0, Number(d && d.interestDay) || 0);
+  } catch (e) {
+    lastInterestDay = 0;
   }
 }
 
@@ -94,6 +111,7 @@ function resetSave() {
   localStorage.removeItem(SAVE_OLD_KEY);
 }
 
+// Multa ao morrer: carteira → banco → dívida
 function applyDeathFine(amount) {
   let rest = amount;
   const fromWallet = Math.min(money, rest); money -= fromWallet; rest -= fromWallet;

@@ -5,6 +5,7 @@ function loop(t) {
   last = t;
 
   if (st === 'play') { update(dt); updCam(dt); }
+  else if (st === 'casino') { casinoUpdate(dt); }   // o giro do cassino precisa rodar fora do play
   else if (st === 'dead') {
     deadT += dt;
     for (const p of PT) { p.l -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
@@ -30,7 +31,17 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
+// Ao começar uma partida: restaura relógio, juros e cor da roupa salvos
+const _startBase = start;
+start = function () {
+  _startBase();
+  restoreClock();
+  P.col = look.shirt;
+};
+
 init();
+restoreClock();
+P.col = look.shirt;
 camX = 600; camY = SY;
 requestAnimationFrame(loop);
 

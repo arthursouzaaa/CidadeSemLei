@@ -11,6 +11,8 @@ const DISTRICTS = {
 };
 const SPECIAL_CELLS = new Set(['5,5', '10,5', '4,5', '8,13', '7,7', '5,2', '13,3']);
 
+let curDistrict = null;
+
 function districtAt(x, y) {
   const i = Math.floor(x / CELL), j = Math.floor(y / CELL);
   for (const k in DISTRICTS) {
@@ -130,17 +132,22 @@ spawnPed = function (init, cop) {
   return p;
 };
 
-let curDistrict = null;
-const _updateBase = update;
-update = function (dt) {
-  _updateBase(dt);
-  if (st !== 'play') return;
-  const d = districtAt(P.x, P.y);
-  if (d !== curDistrict) {
-    curDistrict = d;
-    if (d) toast('Você entrou: ' + DISTRICTS[d].n);
+// Correção do erro 'st' before initialization:
+// Só modifica o update DEPOIS que todos os scripts carregarem.
+window.addEventListener('load', () => {
+  if (typeof update === 'function') {
+    const _updateBase = update;
+    update = function (dt) {
+      _updateBase(dt);
+      if (st !== 'play') return;
+      const d = districtAt(P.x, P.y);
+      if (d !== curDistrict) {
+        curDistrict = d;
+        if (d) toast('Você entrou: ' + DISTRICTS[d].n);
+      }
+    };
   }
-};
+});
 
 function drawDistrictName() {
   if (st === 'play' && curDistrict) label('Bairro: ' + DISTRICTS[curDistrict].n, 20, 40, 16, '#fde68a');

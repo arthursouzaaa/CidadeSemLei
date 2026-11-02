@@ -49,9 +49,16 @@ addEventListener('keydown', e => {
   }
 });
 
-// Atualização e desenho da simulação, por quadro
-const _updPhys = update;
-update = function (dt) {
-  _updPhys(dt);
-  physStep();
-};
+// Correção do erro "update is not defined":
+// Usamos o evento 'load' para garantir que o game.js já carregou e criou a função 'update' original.
+window.addEventListener('load', () => {
+  if (typeof update === 'function') {
+    const _updPhys = update;
+    update = function (dt) {
+      _updPhys(dt);
+      physStep();
+    };
+  } else {
+    console.warn("Aviso: A função 'update' não foi encontrada no momento da inicialização da física. O teste Ctrl+B pode não rodar.");
+  }
+});

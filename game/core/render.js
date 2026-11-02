@@ -36,7 +36,6 @@ function drawCar(c) {
 }
 
 // ----- ARMA NA MÃO (animação por tipo) -----
-// Recuo: depende do tempo desde o último disparo (P.cd). Cada arma tem seu próprio recuo.
 const GUN_STYLE = {
   '-1': { len: 0,  kick: 0,  name: 'mao' },
   0:    { len: 16, kick: 5,  name: 'pistola', col: '#1f2937', rec: .28 },
@@ -50,13 +49,12 @@ function drawHeldWeapon(hx, hy) {
   if (P.sel) return; // granada/molotov/C4: sem arma na mão
   const st0 = GUN_STYLE[key] || GUN_STYLE['-1'];
 
-  // progresso do recuo: 1 logo após o tiro, 0 quando pronto para atirar de novo
   const since = P.cd > 0 ? 1 - P.cd / (st0.rec || 0.3) : 1;
   const recoil = st0.kick * clamp(1 - since, 0, 1) * (st0.rec ? 1 : 0);
 
   ctx.save();
   ctx.translate(hx, hy); ctx.rotate(P.a);
-    if (key === -1 || key === undefined) {
+  if (key === -1 || key === undefined) {
     const sw = Math.sin(tm * 6) * 1.2;
     ctx.fillStyle = P.skin || '#d9a066';
     ctx.beginPath(); ctx.arc(5 + sw, 4, 2.6, 0, TAU); ctx.fill();
@@ -65,27 +63,25 @@ function drawHeldWeapon(hx, hy) {
 
   const L = st0.len, x0 = 6 - recoil;
   ctx.fillStyle = st0.col;
-  if (key === 0) { // pistola: corpo curto e cano
+  if (key === 0) {
     ctx.fillRect(x0, -3, 10, 6);
     ctx.fillRect(x0 + 8, -2, L - 8, 4);
-  } else if (key === 1) { // SMG: corpo, carregador e coronha
+  } else if (key === 1) {
     ctx.fillRect(x0, -3, 14, 6);
     ctx.fillRect(x0 + 14, -1.5, L - 14, 3);
     ctx.fillRect(x0 + 4, 3, 3, 6);
     ctx.fillRect(x0 - 6, -2, 6, 4);
-  } else if (key === 2) { // escopeta: cano duplo e coronha de madeira
+  } else if (key === 2) {
     ctx.fillRect(x0 - 8, -2.5, 8, 5);
     ctx.fillRect(x0, -4, L - 4, 3);
     ctx.fillRect(x0, 0, L - 4, 3);
     ctx.fillStyle = '#92400e'; ctx.fillRect(x0 - 12, -3, 6, 6);
   }
-  // mão segurando a arma
   ctx.fillStyle = P.skin || '#d9a066';
   ctx.beginPath(); ctx.arc(4, 3, 3.2, 0, TAU); ctx.fill();
   ctx.restore();
 }
 
-// Faca e bastão: arco de golpe. P.cd alto = golpe recém-feito.
 function drawMelee(hx, hy) {
   const knife = P.sel === 'faca';
   const swing = clamp((P.cd || 0) / (knife ? .3 : .55), 0, 1);
@@ -369,7 +365,7 @@ function hud() {
       : garage.length ? '[G] Pegar carro da garagem (' + garage.length + ')' : 'Garagem vazia';
     if (t) label(t, W / 2, H - 90, 18, '#38bdf8', 'center');
   }
-  if (shopNear() && st === 'play') label('[F] Entrar na loja', W / 2, H - 120, 18, '#4ade80', 'center');
+  if (shopNear() && st === 'play') label('[E] Entrar na loja', W / 2, H - 120, 18, '#4ade80', 'center');
   drawAmmuPrompt();
   drawAtmPrompt();
   drawDeliveryHud();
@@ -390,8 +386,8 @@ function overlays() {
     ctx.fillStyle = g; ctx.fillText('CIDADE SEM LEI', W / 2, H / 2 - 60);
     const L = [
       'WASD: andar / dirigir   •   Shift: correr   •   Mouse: mirar e atirar',
-      'E: entrar/sair/caixa/balcão/oficina   •   G: garagem   •   F: loja   •   R: Ammu-Nation   •   N: mapa   •   Espaço: freio de mão   •   H: buzina',
-      '0: mão livre   •   1-3: armas   •   4 faca   5 bastão   6 granada   7 molotov   8 C4   •   T: tensão   •   P/Esc: pausa   •   Tab: debug',
+      'E: entrar/sair do carro, caixa, casa, balcão, banco, loja, Ammu-Nation, cassino, roupas, oficina   •   G: garagem   •   N: mapa',
+      '0: mão livre   •   1-3: armas   •   4 faca   5 bastão   6 granada   7 molotov   8 C4   •   Q: explodir caixa   •   T: tensão   •   P/Esc: pausa   •   Tab: debug',
       'Cheats: Z armas e itens • X ★★★★★ • C zera procurado • V carro esportivo • B hora • M dinheiro'
     ];
     L.forEach((t, i) => label(t, W / 2, H / 2 - 10 + i * 28, 16, i === 3 ? '#94a3b8' : '#e2e8f0', 'center'));
