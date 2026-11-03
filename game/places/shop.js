@@ -1,3 +1,22 @@
+// ===== HELPERS DE UI (usam o painel premium do render.js) =====
+function drawUICard(x, y, w, h, title, color) {
+  drawPremiumPanel(x, y, w, h, color);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = color;
+  ctx.font = 'bold 30px "Segoe UI", sans-serif';
+  ctx.shadowColor = color; ctx.shadowBlur = 10;
+  ctx.fillText(title, x + w / 2, y + 50);
+  ctx.shadowBlur = 0;
+}
+
+function drawUIButton(x, y, w, h, key, text, price, color, icon) {
+  drawPremiumButton(x, y, w, h, key, text, price, color, icon || '');
+}
+
+// Animação de entrada das lojas (zerada ao abrir)
+let shopAnimT = 0;
+let ammuAnimT = 0;
+
 // ===== LOJA VERDE: consumo (sem armas) =====
 const SHOP_CELL = { i: 10, j: 5 };
 const SHOP_RECT = {
@@ -85,14 +104,14 @@ function updVest() {
 }
 
 addEventListener('keydown', e => {
-  if (st === 'play' && e.code === 'KeyE' && shopNear()) { st = 'shop'; return; }
+  if (st === 'play' && e.code === 'KeyE' && shopNear()) { st = 'shop'; shopAnimT = 0; return; }
   if (st === 'shop') {
     if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
     const map = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3 };
     if (e.code in map) shopBuy(map[e.code]);
     return;
   }
-  if (st === 'play' && e.code === 'KeyE' && ammuNear()) { st = 'ammu'; return; }
+  if (st === 'play' && e.code === 'KeyE' && ammuNear()) { st = 'ammu'; ammuAnimT = 0; return; }
   if (st === 'ammu') {
     if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; return; }
     const i = AMMU_KEYS.indexOf(e.code);
@@ -128,31 +147,103 @@ function drawAmmuPrompt() {
 
 function drawShopOverlay() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = 'rgba(0, 0, 5, 0.7)'; ctx.fillRect(0, 0, W, H);
-  const bw = 640, bh = 480;
+  if (shopAnimT < 1) shopAnimT += 0.1;
+  const animScale = 0.95 + 0.05 * shopAnimT;
+
+  ctx.fillStyle = 'rgba(0, 0, 5, 0.75)'; ctx.fillRect(0, 0, W, H);
+
+  const bw = 680, bh = 560;
   const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
   const cx = W / 2;
-  let startY = by + 100;
-  drawUICard(bx, by, bw, bh, '🛒 LOJA', '#4ade80');
-  ctx.textAlign = 'center'; ctx.fillStyle = '#facc15'; ctx.font = 'bold 20px "Segoe UI", sans-serif';
-  ctx.fillText('Dinheiro: $' + money.toLocaleString('pt-BR'), cx, startY - 20);
-  startY += 20;
-  
-  shopList().forEach((it, i) => {
-    const oy = startY + i * 60;
+
+  ctx.save();
+  ctx.translate(cx, H / 2);
+  ctx.scale(animScale, animScale);
+  ctx.translate(-cx, -H / 2);
+
+  drawPremiumPanel(bx, by, bw, bh, '#4ade80');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#4ade80';
+  ctx.font = 'bold 32px "Segoe UI", sans-serif';
+  ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 10;
+  ctx.fillText('🛒 LOJA 24H', cx, by + 55);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '14px "Consolas", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('KIT DE SOBREVIVÊNCIA E CONVENIÊNCIA', cx, by + 80);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.roundRect(bx + 40, by + 100, bw - 80, 44, 12); ctx.fill();
+  ctx.textAlign = 'left';
+  ctx.font = '14px "Consolas", monospace'; ctx.fillStyle = '#94a3b8';
+  ctx.fillText('SEU SALDO', bx + 60, by + 127);
+  ctx.textAlign = 'right';
+  ctx.font = 'bold 22px "Consolas", monospace'; ctx.fillStyle = '#4ade80';
+  ctx.fillText('$' + money.toLocaleString('pt-BR'), bx + bw - 60, by + 130);
+
+  const items = shopList();
+  const descs = [
+    'Restaura a vida ao máximo',
+    'Recupera 40 de vida',
+    'Vida máx 150 por 60 segundos',
+    'Disponível em uma atualização futura'
+  ];
+  const startY = by + 170;
+  items.forEach((it, i) => {
+    const oy = startY + i * 82;
     const err = it.check();
-    drawUIButton(bx + 40, oy, bw - 80, 50, '[' + (i + 1) + ']', it.name(), err || ('$' + it.price()), err ? '#64748b' : '#4ade80', '');
-    if (mouse.clicked && mouseInRect(mouse.x, mouse.y, bx + 40, oy, bw - 80, 50)) {
-      if (!err) shopBuy(i);
+    const disabled = !!err || i === 3;
+    const price = it.price();
+    const color = disabled ? '#475569' : '#4ade80';
+    const hover = !disabled && mouseInRect(mouse.x, mouse.y, bx + 40, oy, bw - 80, 66);
+
+    ctx.save();
+    if (hover) { ctx.shadowColor = color; ctx.shadowBlur = 14; }
+    ctx.fillStyle = hover ? 'rgba(30,41,59,1)' : 'rgba(15,23,42,0.85)';
+    ctx.beginPath(); ctx.roundRect(bx + 40, oy, bw - 80, 66, 12); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = hover ? color : 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(bx + 40, oy, bw - 80, 66, 12); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.roundRect(bx + 40, oy, 6, 66, [12, 0, 0, 12]); ctx.fill();
+    ctx.restore();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = disabled ? '#64748b' : (hover ? '#fff' : '#e2e8f0');
+    ctx.font = 'bold 17px "Segoe UI", sans-serif';
+    ctx.fillText('[' + (i + 1) + '] ' + it.name(), bx + 65, oy + 30);
+    ctx.font = '13px "Segoe UI", sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(descs[i], bx + 65, oy + 52);
+
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 20px "Consolas", monospace';
+    ctx.fillStyle = disabled ? '#64748b' : (price > money ? '#f87171' : '#facc15');
+    const label2 = i === 3 ? 'EM BREVE' : (err ? '' : '$' + price);
+    ctx.fillText(label2, bx + bw - 60, oy + 40);
+    if (err && i !== 3) {
+      ctx.font = '12px "Segoe UI", sans-serif'; ctx.fillStyle = '#f87171';
+      ctx.fillText(err, bx + bw - 60, oy + 58);
+    }
+
+    if (mouse.clicked && hover) {
+      shopBuy(i);
       mouse.clicked = false;
     }
   });
-  ctx.textAlign = 'center'; ctx.fillStyle = '#64748b'; ctx.font = '14px "Segoe UI", sans-serif';
-  ctx.fillText('ESC ou E para sair', cx, by + bh - 25);
+
+  ctx.restore();
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#475569'; ctx.font = '14px "Consolas", monospace';
+  ctx.fillText('1-4 comprar  •  ESC ou E: sair', cx, by + bh - 25);
 }
 
 function drawAmmuOverlay() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (ammuAnimT < 1) ammuAnimT += 0.1;
   ctx.fillStyle = 'rgba(0, 0, 5, 0.8)'; ctx.fillRect(0, 0, W, H);
   const bw = 640, bh = 640;
   const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
@@ -171,7 +262,7 @@ function drawAmmuOverlay() {
     const err = it.need();
     const col = it.crime ? '#f87171' : '#a3e635';
     const prefix = it.crime ? '⚠️ ' : '';
-    
+
     const hover = mouseInRect(mouse.x, mouse.y, bx + 40, oy, bw - 80, 36);
     ctx.fillStyle = hover ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
     ctx.beginPath(); ctx.roundRect(bx + 40, oy, bw - 80, 36, 8); ctx.fill();
@@ -197,7 +288,7 @@ function drawAmmuOverlay() {
 
 addEventListener('mousedown', e => {
   if ((st === 'shop' || st === 'ammu') && e.button === 0) {
-    let bw = 640, bh = st === 'shop' ? 480 : 640;
+    const bw = 640, bh = st === 'shop' ? 680 : 640;
     const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
     if (!mouseInRect(e.clientX, e.clientY, bx, by, bw, bh)) {
       st = 'play';

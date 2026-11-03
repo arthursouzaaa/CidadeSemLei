@@ -9,7 +9,7 @@ const HOUSE_DEFS = [
   { id: 'resid2',     n: 'Casa Residencial II', region: 'residencial', price: 15000, cell: [14, 3], roof: '#4c1d95' }
 ];
 let safehouseAnimTimer = 0;
-let selectedHouse = null; // <-- NOVO: Guarda a casa aberta no menu
+let selectedHouse = null;
 
 for (const h of HOUSE_DEFS) {
   const [i, j] = h.cell;
@@ -20,9 +20,10 @@ for (const h of HOUSE_DEFS) {
 
 function houseById(id) { return HOUSE_DEFS.find(h => h.id === id) || null; }
 function ownsHouse(id) { return Array.isArray(houses) && houses.includes(id); }
+
+// Distância da porta: maior que a área de colisão, para o E funcionar a pé ou de carro parado
 function houseNear() {
-  if (P.veh) return null;
-  for (const h of HOUSE_DEFS) if (hyp(P.x - h.door.x, P.y - h.door.y) < 70) return h;
+  for (const h of HOUSE_DEFS) if (hyp(P.x - h.door.x, P.y - h.door.y) < 90) return h;
   return null;
 }
 
@@ -42,22 +43,12 @@ function useHouse(h) {
   spawnHouse = h.id;
   saveGame();
   toast('Você descansou e o jogo foi salvo na ' + h.n + '.');
-  st = 'play'; 
+  st = 'play';
 }
 
-// Função que o entities.js chama ao apertar E
-function tryHouse() {
-  const h = houseNear();
-  if (!h) return false;
-  
-  if (ownsHouse(h.id)) {
-    useHouse(h);
-  } else {
-    selectedHouse = h; // <-- SALVA A CASA AQUI
-    st = 'safehouse';
-    safehouseAnimTimer = 0;
-  }
-  return true;
+function respawnPoint() {
+  const h = spawnHouse && ownsHouse(spawnHouse) ? houseById(spawnHouse) : null;
+  return h ? h.spawn : { x: SX, y: SY };
 }
 
 function drawHouse(h) {
@@ -66,7 +57,6 @@ function drawHouse(h) {
   ctx.fillStyle = h.roof; ctx.fillRect(r.x, r.y, r.w, r.h);
   ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2; ctx.strokeRect(r.x, r.y, r.w, r.h);
   ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(r.x + 10, r.y + 10, r.w - 20, r.h - 20);
-  
   const owned = ownsHouse(h.id);
   ctx.fillStyle = owned ? '#0f172a' : '#1f2937';
   ctx.fillRect(h.door.x - 6, h.door.y - 12, 12, 16);
@@ -89,14 +79,9 @@ function drawHouseHint() {
   else label('[E] Ver imóvel: ' + h.n + ' ($' + h.price + ')', W / 2, H - 240, 18, '#facc15', 'center');
 }
 
-// ==========================================
-// ==== UI PREMIUM DA IMOBILIÁRIA ====
-// ==========================================
 function drawSafehouseOverlay() {
-  // Usa a casa salva em vez de checar a distância (evita fechar o menu sozinho)
   const h = selectedHouse;
   if (!h) { st = 'play'; return; }
-  
   if (safehouseAnimTimer < 1) safehouseAnimTimer += 0.1;
   const animScale = 0.95 + (0.05 * safehouseAnimTimer);
 
@@ -107,9 +92,9 @@ function drawSafehouseOverlay() {
   const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
 
   ctx.save();
-  ctx.translate(W/2, H/2);
+  ctx.translate(W / 2, H / 2);
   ctx.scale(animScale, animScale);
-  ctx.translate(-W/2, -H/2);
+  ctx.translate(-W / 2, -H / 2);
 
   drawPremiumPanel(bx, by, bw, bh, '#facc15');
 
@@ -122,7 +107,7 @@ function drawSafehouseOverlay() {
   ctx.shadowColor = '#facc15'; ctx.shadowBlur = 10;
   ctx.fillText('🏠 IMOBILIÁRIA', cx, startY);
   ctx.shadowBlur = 0;
-  
+
   ctx.font = '14px "Consolas", monospace';
   ctx.fillStyle = '#94a3b8';
   ctx.fillText('IMÓVEIS DISPONÍVEIS', cx, startY + 20);
@@ -132,46 +117,44 @@ function drawSafehouseOverlay() {
   ctx.font = 'bold 24px "Segoe UI", sans-serif';
   ctx.fillStyle = '#fff';
   ctx.fillText(h.n.toUpperCase(), cx, startY);
-  
+
   ctx.font = '16px "Segoe UI", sans-serif';
   ctx.fillStyle = '#cbd5e1';
   ctx.fillText('Região: ' + (h.region.charAt(0).toUpperCase() + h.region.slice(1)), cx, startY + 25);
 
   startY += 70;
 
-  ctx.font = 'bold 18px "Consolas", monospace'; 
+  ctx.font = 'bold 18px "Consolas", monospace';
   ctx.fillStyle = '#94a3b8';
   ctx.fillText('VALOR DO IMÓVEL', cx, startY);
-  
-  ctx.font = 'bold 36px "Consolas", monospace'; 
+
+  ctx.font = 'bold 36px "Consolas", monospace';
   ctx.fillStyle = '#facc15';
   ctx.shadowColor = '#facc15'; ctx.shadowBlur = 10;
   ctx.fillText('$' + h.price.toLocaleString('pt-BR'), cx, startY + 35);
   ctx.shadowBlur = 0;
 
-  ctx.font = '16px "Consolas", monospace'; 
+  ctx.font = '16px "Consolas", monospace';
   ctx.fillStyle = '#4ade80';
   ctx.fillText('Seu saldo: $' + money.toLocaleString('pt-BR'), cx, startY + 65);
 
   startY += 110;
 
   const btnW = 400, btnH = 64;
-  const btnX = cx - btnW/2;
+  const btnX = cx - btnW / 2;
   const canBuy = money >= h.price;
   const hover = mouseInRect(mouse.x, mouse.y, btnX, startY, btnW, btnH);
-  
-  if (hover && canBuy) {
-    ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 20;
-  }
+
+  if (hover && canBuy) { ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 20; }
 
   const bgGrad = ctx.createLinearGradient(btnX, startY, btnX, startY + btnH);
   bgGrad.addColorStop(0, hover && canBuy ? 'rgba(34, 197, 94, 0.2)' : 'rgba(15, 23, 42, 0.9)');
   bgGrad.addColorStop(1, 'rgba(2, 6, 23, 0.9)');
   ctx.fillStyle = bgGrad;
   ctx.beginPath(); ctx.roundRect(btnX, startY, btnW, btnH, 12); ctx.fill();
-  
-  ctx.strokeStyle = canBuy ? '#4ade80' : '#f87171'; 
-  ctx.lineWidth = 2; 
+
+  ctx.strokeStyle = canBuy ? '#4ade80' : '#f87171';
+  ctx.lineWidth = 2;
   ctx.beginPath(); ctx.roundRect(btnX, startY, btnW, btnH, 12); ctx.stroke();
   ctx.shadowBlur = 0;
 
@@ -183,6 +166,7 @@ function drawSafehouseOverlay() {
   if (mouse.clicked && hover && canBuy) {
     buyHouse(h);
     useHouse(h);
+    selectedHouse = null;
     mouse.clicked = false;
   }
 
@@ -191,16 +175,23 @@ function drawSafehouseOverlay() {
   ctx.fillText('ESC: CANCELAR', cx, by + bh - 25);
 }
 
+// E abre a casa (ou descansa, se for sua). Este listener roda depois do interact.js,
+// que ignora o E quando há casa por perto, então não há disparo duplo.
 addEventListener('keydown', e => {
+  if (st === 'play' && e.code === 'KeyE' && !garageAnim) {
+    const h = houseNear();
+    if (!h) return;
+    if (ownsHouse(h.id)) { useHouse(h); return; }
+    selectedHouse = h;
+    st = 'safehouse';
+    safehouseAnimTimer = 0;
+    return;
+  }
   if (st === 'safehouse') {
     if (e.code === 'Escape' || e.code === 'KeyE') { st = 'play'; selectedHouse = null; return; }
     if (e.code === 'Digit1') {
       const h = selectedHouse;
-      if (h && money >= h.price) { 
-        buyHouse(h); 
-        useHouse(h); 
-        selectedHouse = null;
-      }
+      if (h && money >= h.price) { buyHouse(h); useHouse(h); selectedHouse = null; }
     }
   }
 });
@@ -216,7 +207,6 @@ addEventListener('mousedown', e => {
   }
 });
 
-// Adiciona os POIs
 if (typeof mapPois === 'function') {
   const _poisHouse = mapPois;
   mapPois = function () {

@@ -20,7 +20,7 @@ win.loadFile('index.html');
 
 // DevTools é o de baixo, n mexer no de cima!!! 
 
-win.webContents.openDevTools();
+// win.webContents.openDevTools();
 
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type === 'keyDown' && input.key === 'F11') {

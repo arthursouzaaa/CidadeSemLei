@@ -2,18 +2,22 @@ const CELL = 360, RD = 120, N = 16, WS = CELL * N;
 const blocks = [];
 const ROOFS = ['#7b8794','#a9714b','#5b7c99','#8e6c9f','#6b9080','#b5838d','#8d99ae','#c08552','#6d6875'];
 
-// Células das Safehouses (não gerar prédios visuais aqui)
-const SAFEHOUSE_CELLS = ['1,10', '3,13', '12,5', '7,1', '12,14', '2,6', '14,3'];
+// Células das casas: [i, j, cor do telhado] (devem bater com HOUSE_DEFS em safehouse.js)
+const SAFEHOUSE_CELLS = [
+  [1, 10, '#92400e'], [3, 13, '#78350f'], [12, 5, '#57534e'], [7, 1, '#334155'],
+  [12, 14, '#0891b2'], [2, 6, '#7c2d12'], [14, 3, '#4c1d95']
+];
 
 for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
   const x0 = i * CELL + RD, y0 = j * CELL + RD, s = CELL - RD;
   const b = { x: x0, y: y0, s, park: false, bl: [], tr: [] };
-  
-  // Se for uma célula de Safehouse, cria um bloco invisível para colisão e pula a geração visual
-  if (SAFEHOUSE_CELLS.includes(i + ',' + j)) {
-    b.bl.push({ x: x0 + 40, y: y0 + 40, w: s - 80, h: s - 80, z: 10, col: 'rgba(0,0,0,0)' });
+
+  // Casa: bloco de colisão do mesmo tamanho do telhado. A porta fica fora dele.
+  const sh = SAFEHOUSE_CELLS.find(c => c[0] === i && c[1] === j);
+  if (sh) {
+    b.bl.push({ x: x0 + 24, y: y0 + 24, w: s - 48, h: s - 48, z: 60, col: sh[2] });
     blocks.push(b);
-    continue; 
+    continue;
   }
 
   if (R() < .13) {

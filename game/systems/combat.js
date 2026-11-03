@@ -6,7 +6,8 @@ let grenades = [];
 let fires = [];
 let meleeFx = null;
 let atmProg = null;
-let atmMenu = null; // caixa aberto no menu (sacar/depositar)
+let atmMenu = null;
+let atmAnimT = 0;
 
 const ATMS = [[2, 2], [6, 3], [12, 7], [3, 11], [9, 13], [14, 10]].map(([i, j]) => ({
   x: i * CELL + RD + 8, y: j * CELL + RD + 8, used: false, cd: 0
@@ -100,7 +101,8 @@ function updCombat(dt) {
 // ----- CAIXA: menu de sacar/depositar (E) -----
 function atmOpenMenu() {
   if (!bank.acc) { toast('Crie sua conta no banco primeiro (E no prédio do banco).'); return true; }
-  atmMenu = { a: nearAtm(), screen: 'menu', input: '' };
+  atmMenu = { a: nearAtm(), screen: 'menu', input: '', msg: '' };
+  atmAnimT = 0;
   st = 'atm';
   return true;
 }
@@ -157,14 +159,14 @@ addEventListener('keydown', e => {
   e.stopImmediatePropagation();
   if (e.code === 'Escape') { st = 'play'; atmMenu = null; return; }
   if (atmMenu.screen === 'menu') {
-    if (e.code === 'Digit1') { atmMenu.screen = 'sacar'; atmMenu.input = ''; atmMenu.msg = 'Quanto sacar? (Enter)'; }
-    if (e.code === 'Digit2') { atmMenu.screen = 'depositar'; atmMenu.input = ''; atmMenu.msg = 'Quanto depositar? (Enter)'; }
+    if (e.code === 'Digit1') { atmMenu.screen = 'sacar'; atmMenu.input = ''; atmMenu.msg = ''; }
+    if (e.code === 'Digit2') { atmMenu.screen = 'depositar'; atmMenu.input = ''; atmMenu.msg = ''; }
     return;
   }
   if (e.code === 'Backspace') { atmMenu.input = atmMenu.input.slice(0, -1); return; }
   if (e.code === 'Enter' || e.code === 'NumpadEnter') {
     const v = Number(atmMenu.input);
-    if (!v || v <= 0) { atmMenu.msg = 'Valor inválido.'; return; }
+    if (!v || v <= 0) { atmMenu.msg = 'Digite um valor válido.'; return; }
     if (atmMenu.screen === 'sacar') {
       if (bank.balance < v) { atmMenu.msg = 'Saldo insuficiente no banco.'; return; }
       bank.balance -= v; money += v; atmMenu.msg = 'Sacado $' + v + '.';
@@ -224,19 +226,100 @@ function drawAtmPrompt() {
   label(a.used ? 'Caixa sem dinheiro' : '[E] Sacar/depositar  •  [Q] Explodir com C4', W / 2, H - 180, 18, '#f0abfc', 'center');
 }
 
+// Tela do caixa: mesmo padrão visual do banco (só sacar e depositar)
 function drawAtmOverlay() {
   if (!atmMenu) return;
+  if (atmAnimT < 1) atmAnimT += 0.1;
+  const animScale = 0.95 + 0.05 * atmAnimT;
+
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = 'rgba(2,6,23,.9)'; ctx.fillRect(0, 0, W, H);
-  label('CAIXA ELETRÔNICO', W / 2, H / 2 - 150, 36, '#f0abfc', 'center');
-  if (bank.acc) label('Saldo: $' + bank.balance.toLocaleString('pt-BR') + '   •   Carteira: $' + money.toLocaleString('pt-BR'), W / 2, H / 2 - 110, 16, '#e2e8f0', 'center');
+  ctx.fillStyle = 'rgba(0, 0, 5, 0.75)'; ctx.fillRect(0, 0, W, H);
+
+  const bw = 680, bh = 460;
+  const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+  const cx = W / 2;
+
+  ctx.save();
+  ctx.translate(cx, H / 2);
+  ctx.scale(animScale, animScale);
+  ctx.translate(-cx, -H / 2);
+
+  drawPremiumPanel(bx, by, bw, bh, '#f0abfc');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f0abfc';
+  ctx.font = 'bold 30px "Segoe UI", sans-serif';
+  ctx.shadowColor = '#f0abfc'; ctx.shadowBlur = 10;
+  ctx.fillText('🏧 CAIXA ELETRÔNICO', cx, by + 55);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '14px "Consolas", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('AGÊNCIA ' + (bank.acc || '----') + '  •  SAQUE E DEPÓSITO', cx, by + 80);
+
+  // Saldos
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.roundRect(bx + 40, by + 100, bw - 80, 60, 12); ctx.fill();
+  ctx.textAlign = 'left';
+  ctx.font = '13px "Consolas", monospace'; ctx.fillStyle = '#94a3b8';
+  ctx.fillText('SALDO NO BANCO', bx + 60, by + 124);
+  ctx.fillText('CARTEIRA', bx + 360, by + 124);
+  ctx.font = 'bold 20px "Consolas", monospace'; ctx.fillStyle = '#4ade80';
+  ctx.fillText('$' + bank.balance.toLocaleString('pt-BR'), bx + 60, by + 149);
+  ctx.fillStyle = '#facc15';
+  ctx.fillText('$' + money.toLocaleString('pt-BR'), bx + 360, by + 149);
+
   if (atmMenu.screen === 'menu') {
-    label('[1] Sacar', W / 2, H / 2 - 40, 22, '#fff', 'center');
-    label('[2] Depositar', W / 2, H / 2, 22, '#fff', 'center');
+    const options = [
+      { key: '[1]', text: 'SACAR', color: '#facc15', icon: '💵' },
+      { key: '[2]', text: 'DEPOSITAR', color: '#4ade80', icon: '💸' }
+    ];
+    options.forEach((opt, i) => {
+      const oy = by + 190 + i * 70;
+      drawPremiumButton(bx + 50, oy, bw - 100, 56, opt.key, opt.text, '', opt.color, opt.icon);
+      if (mouse.clicked && mouseInRect(mouse.x, mouse.y, bx + 50, oy, bw - 100, 56)) {
+        atmMenu.screen = i === 0 ? 'sacar' : 'depositar';
+        atmMenu.input = ''; atmMenu.msg = '';
+        mouse.clicked = false;
+      }
+    });
   } else {
-    label(atmMenu.screen === 'sacar' ? 'Sacar' : 'Depositar', W / 2, H / 2 - 40, 20, '#facc15', 'center');
-    label(atmMenu.input || '0', W / 2, H / 2 + 10, 40, '#fde047', 'center');
+    const isSac = atmMenu.screen === 'sacar';
+    const col = isSac ? '#facc15' : '#4ade80';
+    ctx.textAlign = 'center'; ctx.fillStyle = col; ctx.font = 'bold 20px "Segoe UI", sans-serif';
+    ctx.fillText(isSac ? 'VALOR DO SAQUE' : 'VALOR DO DEPÓSITO', cx, by + 200);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath(); ctx.roundRect(cx - 200, by + 220, 400, 90, 12); ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = col; ctx.font = 'bold 46px "Consolas", monospace';
+    ctx.shadowColor = col; ctx.shadowBlur = 15;
+    ctx.fillText('$ ' + (atmMenu.input || '0'), cx, by + 280);
+    ctx.shadowBlur = 0;
+
+    ctx.font = '13px "Segoe UI", sans-serif'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText('Digite o valor e aperte Enter  •  Backspace apaga', cx, by + 335);
   }
-  if (atmMenu.msg) label(atmMenu.msg, W / 2, H / 2 + 90, 18, '#fde68a', 'center');
-  label('ESC para sair', W / 2, H - 40, 14, '#94a3b8', 'center');
+
+  if (atmMenu.msg) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = atmMenu.msg.includes('Sacado') || atmMenu.msg.includes('Depositado') ? '#4ade80' : '#f87171';
+    ctx.font = 'bold 16px "Segoe UI", sans-serif';
+    ctx.fillText(atmMenu.msg, cx, by + bh - 55);
+  }
+
+  ctx.restore();
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#475569'; ctx.font = '14px "Consolas", monospace';
+  ctx.fillText('ESC: SAIR', cx, by + bh - 25);
 }
+
+addEventListener('mousedown', e => {
+  if (st === 'atm' && e.button === 0) {
+    const bw = 680, bh = 460;
+    const bx = W / 2 - bw / 2, by = H / 2 - bh / 2;
+    if (!mouseInRect(e.clientX, e.clientY, bx, by, bw, bh)) {
+      st = 'play'; atmMenu = null;
+    }
+  }
+});
