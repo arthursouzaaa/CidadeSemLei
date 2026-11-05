@@ -1,27 +1,32 @@
-// ===== BAIRROS FIXOS (visual e comportamento; a geometria do mapa não muda) =====
-const DISTRICTS = {
-  centro: { n: 'Centro (comercial)', i0: 5, i1: 10, j0: 0, j1: 7, ground: null, road: null,
-    bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
-  industrial: { n: 'Zona industrial', i0: 11, i1: 15, j0: 0, j1: 6, ground: '#5f6163', road: null,
-    bld: ['#57534e', '#78716c', '#44403c'], z: [40, 70] },
-  periferia: { n: 'Periferia', i0: 0, i1: 4, j0: 8, j1: 15, ground: '#7c6a4f', road: '#5b4a36',
-    bld: ['#b45309', '#92400e', '#a8a29e', '#6b7280'], z: [30, 50] },
-  praia: { n: 'Orla / Praia', i0: 11, i1: 15, j0: 10, j1: 15, ground: '#e0c08a', road: null,
-    bld: ['#38bdf8', '#f472b6', '#fde68a', '#fff7ed'], z: [30, 60] }
+// ===== BAIRROS FIXOS (visual e comportamento) =====
+// Fase 0: os bairros agora vêm de zones.js (zonaIdDe). Mesmo mapa, mesmo visual.
+const DISTRICTS = {};
+for (const z of ZONAS) {
+  if (!z.ativa) continue;
+  DISTRICTS[z.id] = {
+    n: z.nome, i0: z.i0, i1: z.i1, j0: z.j0, j1: z.j1,
+    ground: z.chao,
+    road: z.id === 'periferia' ? '#5b4a36' : null,
+    bld: BLD_POR_ZONA[z.id].bld, z: BLD_POR_ZONA[z.id].z
+  };
+}
+
+// Paleta de prédios e alturas de cada zona ativa (mesmos valores de antes)
+const BLD_POR_ZONA = {
+  centro:     { bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
+  industrial: { bld: ['#57534e', '#78716c', '#44403c'], z: [40, 70] },
+  periferia:  { bld: ['#b45309', '#92400e', '#a8a29e', '#6b7280'], z: [30, 50] },
+  praia:      { bld: ['#38bdf8', '#f472b6', '#fde68a', '#fff7ed'], z: [30, 60] }
 };
+
 const SPECIAL_CELLS = new Set(['5,5', '10,5', '4,5', '8,13', '7,7', '5,2', '13,3']);
 
-let curDistrict = null;
-
+// Zona ativa em coordenadas de mundo (x, y)
 function districtAt(x, y) {
   const i = Math.floor(x / CELL), j = Math.floor(y / CELL);
-  for (const k in DISTRICTS) {
-    const d = DISTRICTS[k];
-    if (i >= d.i0 && i <= d.i1 && j >= d.j0 && j <= d.j1) return k;
-  }
-  return null;
+  return zonaIdDe(i, j);
 }
-function cellDistrict(i, j) { return districtAt(i * CELL + 1, j * CELL + 1); }
+function cellDistrict(i, j) { return zonaIdDe(i, j); }
 
 const PALMS = [], GRASS = [];
 for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
@@ -32,7 +37,7 @@ for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
   if (key === 'praia' && !b.park)
     for (let k = 0; k < 3; k++) PALMS.push({ x: i * CELL + RD + rnd(20, CELL - 40), y: j * CELL + RD + rnd(20, CELL - 40), s: rnd(.9, 1.3) });
   if (key === 'periferia')
-    for (let k = 0; k < 10; k++) GRASS.push({ x: i * CELL + RD + rnd(0, CELL - RD), y: j * CELL + RD + rnd(0, CELL - RD) });
+    for (let k = 0; k < 10; k++) GRASS.push({ x: i * CELL + RD + rnd(0, CELL - RD), y: j * CELL + RD + rnd(0, CELL - RD), s: 0 });
 }
 
 const SEA_X = 15 * CELL + RD + 90;
@@ -40,7 +45,7 @@ function paintSea(x0, y0, x1, y1) {
   if (x1 < SEA_X - 40) return;
   const top = 10 * CELL, bot = WS;
   if (y1 < top || y0 > bot) return;
-  const sx = Math.max(SEA_X, x0), w = x1 - sx + 20;
+  const sx = Math.max(SEA_X, x0);
   const g = ctx.createLinearGradient(SEA_X, 0, WS, 0);
   g.addColorStop(0, '#0e7490'); g.addColorStop(1, '#0c4a6e');
   ctx.fillStyle = g;
@@ -132,8 +137,7 @@ spawnPed = function (init, cop) {
   return p;
 };
 
-// Correção do erro 'st' before initialization:
-// Só modifica o update DEPOIS que todos os scripts carregarem.
+// Aviso ao entrar num bairro e nome do bairro na tela (sem mudança)
 window.addEventListener('load', () => {
   if (typeof update === 'function') {
     const _updateBase = update;
