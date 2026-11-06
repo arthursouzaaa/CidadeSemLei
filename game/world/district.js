@@ -1,5 +1,5 @@
 // ===== BAIRROS FIXOS (visual e comportamento) =====
-// Fase 0.5a: loops e mar usam NW/NH e WSW/WSH. Mesmo visual.
+// Fase 0.5b: mar limitado ao 16x16 original (a orla). Resto do mapa: terreno neutro.
 
 const BLD_POR_ZONA = {
   centro:     { bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
@@ -41,21 +41,24 @@ for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
     for (let k = 0; k < 10; k++) GRASS.push({ x: i * CELL + RD + rnd(0, CELL - RD), y: j * CELL + RD + rnd(0, CELL - RD), s: 0 });
 }
 
-// Mar: faixa fixa à direita da orla (vira por zona na 0.5b)
+// Mar: faixa à direita da orla, só dentro do 16x16 original
 const SEA_X = 15 * CELL + RD + 90;
+const SEA_X2 = 16 * CELL;   // borda direita do 16x16 original
+const SEA_BOT = 16 * CELL;  // borda inferior do 16x16 original
+
 function paintSea(x0, y0, x1, y1) {
-  if (x1 < SEA_X - 40) return;
-  const top = 10 * CELL, bot = WSH;
+  if (x1 < SEA_X - 40 || x0 > SEA_X2) return;
+  const top = 10 * CELL, bot = SEA_BOT;
   if (y1 < top || y0 > bot) return;
   const sx = Math.max(SEA_X, x0);
-  const g = ctx.createLinearGradient(SEA_X, 0, WSW, 0);
+  const g = ctx.createLinearGradient(SEA_X, 0, SEA_X2, 0);
   g.addColorStop(0, '#0e7490'); g.addColorStop(1, '#0c4a6e');
   ctx.fillStyle = g;
-  ctx.fillRect(SEA_X, top, WSW - SEA_X + 200, bot - top + 200);
+  ctx.fillRect(SEA_X, top, SEA_X2 - SEA_X, bot - top);
   ctx.strokeStyle = 'rgba(224,242,254,.35)'; ctx.lineWidth = 2;
   for (let y = top + 20; y < bot; y += 36) {
     ctx.beginPath();
-    for (let x = sx; x < x1 + 20; x += 16) {
+    for (let x = sx; x < Math.min(x1 + 20, SEA_X2); x += 16) {
       const yy = y + Math.sin(x * .03 + tm * 2 + y * .05) * 3;
       if (x === sx) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
     }
@@ -85,7 +88,7 @@ function paintDistricts(x0, y0, x1, y1) {
     if (d.road) { ctx.fillStyle = d.road; ctx.fillRect(X, Y, CELL, RD); ctx.fillRect(X, Y, RD, CELL); }
     if (d.ground && !b.park) { ctx.fillStyle = d.ground; ctx.fillRect(X + RD, Y + RD, CELL - RD, CELL - RD); }
   }
-  for (let j = 10; j < NH; j++) {
+  for (let j = 10; j < 16; j++) {
     const X = 11 * CELL, Y = j * CELL;
     if (X + CELL < x0 || X > x1 || Y + CELL < y0 || Y > y1) continue;
     ctx.fillStyle = 'rgba(120,53,15,.35)';

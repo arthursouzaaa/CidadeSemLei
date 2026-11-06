@@ -1,10 +1,15 @@
+// ===== MUNDO: tamanho e geração dos quarteirões =====
+// Fase 0.5b: mapa 32x32. O 16x16 original fica no canto NW (i 0..15, j 0..15),
+// com os mesmos pontos fixos. O resto é terreno neutro (prédios de cor única).
 const CELL = 360, RD = 120;
-const NW = 16, NH = 16;
+const NW = 32, NH = 32;
 const WSW = CELL * NW, WSH = CELL * NH;
 
+const ORIG_W = 16, ORIG_H = 16; // área original, com zonas e pontos fixos
 
 const blocks = [];
 const ROOFS = ['#7b8794','#a9714b','#5b7c99','#8e6c9f','#6b9080','#b5838d','#8d99ae','#c08552','#6d6875'];
+const NEUTRAL_ROOF = '#4b5563';
 
 // Células das casas: [i, j, cor do telhado] (devem bater com HOUSE_DEFS em safehouse.js)
 const SAFEHOUSE_CELLS = [
@@ -15,11 +20,19 @@ const SAFEHOUSE_CELLS = [
 for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
   const x0 = i * CELL + RD, y0 = j * CELL + RD, s = CELL - RD;
   const b = { x: x0, y: y0, s, park: false, bl: [], tr: [] };
+  const dentroOriginal = i < ORIG_W && j < ORIG_H;
 
   // Casa: bloco de colisão do mesmo tamanho do telhado. A porta fica fora dele.
   const sh = SAFEHOUSE_CELLS.find(c => c[0] === i && c[1] === j);
   if (sh) {
     b.bl.push({ x: x0 + 24, y: y0 + 24, w: s - 48, h: s - 48, z: 60, col: sh[2] });
+    blocks.push(b);
+    continue;
+  }
+
+  // Fora do 16x16 original: terreno neutro, um prédio de cor única por quarteirão
+  if (!dentroOriginal) {
+    b.bl.push({ x: x0 + 20, y: y0 + 20, w: s - 40, h: s - 40, z: 90, col: NEUTRAL_ROOF });
     blocks.push(b);
     continue;
   }
