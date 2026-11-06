@@ -1,3 +1,24 @@
+// ===== FLASH DE TELA (juice): sobreposição leve, chamada pelos eventos do jogo =====
+let flashT = 0, flashDur = 0.15, flashCol = '255,255,255';
+
+// Dispara um flash de tela. cor: 'r,g,b' (ex.: '74,222,128'); dur em segundos; alpha máx. leve
+function flash(cor, dur = 0.15, alpha = 0.18) {
+  flashCol = cor;
+  flashDur = dur;
+  flashT = Math.max(flashT, dur);
+  flashAlpha = alpha;
+}
+let flashAlpha = 0.18;
+
+// Desenha o flash com alfa decrescente (chamado no fim de draw, antes do HUD)
+function drawFlash(dt) {
+  if (flashT <= 0) return;
+  const k = clamp(flashT / flashDur, 0, 1);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = 'rgba(' + flashCol + ',' + (flashAlpha * k) + ')';
+  ctx.fillRect(0, 0, W, H);
+}
+
 function drawCar(c) {
   if (c.fire) return drawFireTruck(c);
   if (c.model === 'moto') return drawMoto(c);
@@ -289,6 +310,7 @@ function draw() {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (hurtF > 0) { ctx.fillStyle = 'rgba(220,0,0,' + hurtF * .5 + ')'; ctx.fillRect(0, 0, W, H); }
+  drawFlash();
   if (st === 'play' || st === 'pause' || st === 'dead') hud();
   if (st === 'play' && !P.veh) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;

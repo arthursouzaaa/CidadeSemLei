@@ -140,6 +140,7 @@ function explode(x, y, src) {
 function hurtP(d, iv = .3) {
   if (P.iv > 0 || st !== 'play') return;
   P.hp -= d; P.iv = iv; hurtF = .4; burst(P.x, P.y, '#b91c1c', 5, 120);
+  flash('220,38,38', 0.2, 0.15);
 }
 function hurtPed(p, d, src) {
   if (p.dead) return;
@@ -650,10 +651,13 @@ function update(dt) {
 
   if (!order) updMission(dt);
 
-  for (const c of cash) if (hyp(c.x - P.x, c.y - P.y) < 24) {
-    c.g = 1; money += c.v; saveGame(); ftext(c.x, c.y, '+$' + c.v, '#4ade80'); snd(900, .08, 'sine', .05, 300);
-  }
-  cash = cash.filter(c => !c.g);
+for (const c of cash) if (hyp(c.x - P.x, c.y - P.y) < 24) {
+  c.g = 1; money += c.v; saveGame();
+  ftext(c.x, c.y, '+$' + c.v, '#4ade80');
+  snd(900, .08, 'sine', .05, 300);
+  flash('74,222,128', 0.15, 0.12);
+}
+cash = cash.filter(c => !c.g);
 
   for (const k of pk) if (!P.veh && hyp(k.x - P.x, k.y - P.y) < 20) {
     if (k.t === 'hp') { if (P.hp < 100) { P.hp = Math.min(100, P.hp + 40); k.g = 1; ftext(k.x, k.y, '+Vida', '#f87171'); } }
