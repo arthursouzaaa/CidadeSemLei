@@ -1,5 +1,6 @@
 // ===== FLASH DE TELA (juice): sobreposição leve, chamada pelos eventos do jogo =====
 let flashT = 0, flashDur = 0.15, flashCol = '255,255,255';
+let flashAlpha = 0.18;
 
 // Dispara um flash de tela. cor: 'r,g,b' (ex.: '74,222,128'); dur em segundos; alpha máx. leve
 function flash(cor, dur = 0.15, alpha = 0.18) {
@@ -8,10 +9,9 @@ function flash(cor, dur = 0.15, alpha = 0.18) {
   flashT = Math.max(flashT, dur);
   flashAlpha = alpha;
 }
-let flashAlpha = 0.18;
 
 // Desenha o flash com alfa decrescente (chamado no fim de draw, antes do HUD)
-function drawFlash(dt) {
+function drawFlash() {
   if (flashT <= 0) return;
   const k = clamp(flashT / flashDur, 0, 1);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -402,22 +402,8 @@ function hud() {
 }
 
 function overlays() {
-  if (st === 'menu') {
-    ctx.fillStyle = 'rgba(0,0,10,.7)'; ctx.fillRect(0, 0, W, H);
-    const g = ctx.createLinearGradient(0, H / 2 - 120, 0, H / 2 - 40);
-    g.addColorStop(0, '#fb923c'); g.addColorStop(1, '#e11d48');
-    ctx.font = "bold " + Math.min(84, W / 9) + "px 'Segoe UI',sans-serif"; ctx.textAlign = 'center';
-    ctx.fillStyle = g; ctx.fillText('CIDADE SEM LEI', W / 2, H / 2 - 60);
-    const L = [
-      'WASD: andar / dirigir   •   Shift: correr   •   Mouse: mirar e atirar',
-      'E: entrar/sair do carro, caixa, casa, balcão, banco, loja, Ammu-Nation, cassino, roupas, oficina   •   G: garagem   •   N: mapa',
-      '0: mão livre   •   1-3: armas   •   4 faca   5 bastão   6 granada   7 molotov   8 C4   •   Q: explodir caixa   •   T: tensão   •   P/Esc: pausa   •   Tab: debug',
-      'Cheats: Z armas e itens • X ★★★★★ • C zera procurado • V carro esportivo • B hora • M dinheiro'
-    ];
-    L.forEach((t, i) => label(t, W / 2, H / 2 - 10 + i * 28, 16, i === 3 ? '#94a3b8' : '#e2e8f0', 'center'));
-    if (Math.floor(performance.now() / 500) % 2) label('ENTER ou clique para jogar', W / 2, H / 2 + 140, 24, '#facc15', 'center');
-  }
-  if (st === 'pause') { ctx.fillStyle = 'rgba(0,0,10,.6)'; ctx.fillRect(0, 0, W, H); label('PAUSADO', W / 2, H / 2, 48, '#fff', 'center'); }
+  if (st === 'menu') drawMenuScreen();
+  if (st === 'pause') drawPauseStats();
   if (st === 'dead') {
     ctx.fillStyle = 'rgba(0,0,0,' + clamp(deadT * .4, 0, .6) + ')'; ctx.fillRect(0, 0, W, H);
     ctx.globalAlpha = clamp(deadT, 0, 1);
@@ -437,4 +423,87 @@ function overlays() {
   if (st === 'safehouse') drawSafehouseOverlay();
 
   drawDebugMenu();
+}
+
+// Tela de pausa: ficha do criminoso com estatísticas, título e progresso
+function drawPauseStats() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = 'rgba(0, 0, 8, 0.82)'; ctx.fillRect(0, 0, W, H);
+
+  const bw = 760, bh = 560, bx = W / 2 - bw / 2, by = H / 2 - bh / 2, cx = W / 2;
+  drawPremiumPanel(bx, by, bw, bh, '#f472b6');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f472b6';
+  ctx.font = 'bold 40px "Segoe UI", sans-serif';
+  ctx.shadowColor = '#f472b6'; ctx.shadowBlur = 16;
+  ctx.fillText('PAUSADO', cx, by + 58);
+  ctx.shadowBlur = 0;
+  ctx.font = '14px "Consolas", monospace'; ctx.fillStyle = '#94a3b8';
+  ctx.fillText('FICHA DO CRIMINOSO  •  P ou Esc para continuar', cx, by + 84);
+
+  const s = stats;
+  const pontos = Math.round(s.crimes * 120 + s.abatidos * 80 + s.missoes * 150 + s.ganho / 20);
+  s.pontuacao = pontos;
+  const titulo = pontos >= 3000 ? 'LENDA DO CRIME' : pontos >= 1500 ? 'CHEFE DO SUBMUNDO'
+    : pontos >= 600 ? 'PROCURADO' : pontos >= 200 ? 'PEQUENO TRAFICANTE' : 'CIDADÃO (POR ENQUANTO)';
+  ctx.fillStyle = 'rgba(244,114,182,.12)';
+  ctx.beginPath(); ctx.roundRect(bx + 40, by + 100, bw - 80, 52, 12); ctx.fill();
+  ctx.fillStyle = '#fde68a'; ctx.font = 'bold 24px "Segoe UI", sans-serif';
+  ctx.shadowColor = '#fde68a'; ctx.shadowBlur = 10;
+  ctx.fillText(titulo, cx, by + 134);
+  ctx.shadowBlur = 0;
+
+  const cards = [
+    { k: 'TEMPO JOGADO', v: formatTempo(s.tempo), c: '#38bdf8' },
+    { k: 'CRIMES', v: String(s.crimes), c: '#f87171' },
+    { k: 'MISSÕES', v: String(s.missoes), c: '#4ade80' },
+    { k: 'GANHO TOTAL', v: '$' + Math.round(s.ganho).toLocaleString('pt-BR'), c: '#facc15' },
+    { k: 'ABATIDOS', v: String(s.abatidos), c: '#fb923c' },
+    { k: 'PONTUAÇÃO', v: pontos.toLocaleString('pt-BR'), c: '#e879f9' }
+  ];
+  const cw = (bw - 80 - 32) / 3, ch = 92;
+  cards.forEach((card, i) => {
+    const col = i % 3, row = Math.floor(i / 3);
+    const x = bx + 40 + col * (cw + 16), y = by + 170 + row * (ch + 14);
+    ctx.fillStyle = 'rgba(15,23,42,0.9)';
+    ctx.beginPath(); ctx.roundRect(x, y, cw, ch, 14); ctx.fill();
+    ctx.strokeStyle = card.c; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = card.c; ctx.fillRect(x, y + 12, 4, ch - 24);
+    ctx.textAlign = 'center';
+    ctx.font = '12px "Consolas", monospace'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText(card.k, x + cw / 2, y + 30);
+    ctx.font = 'bold 26px "Consolas", monospace'; ctx.fillStyle = card.c;
+    ctx.shadowColor = card.c; ctx.shadowBlur = 10;
+    ctx.fillText(card.v, x + cw / 2, y + 66);
+    ctx.shadowBlur = 0;
+  });
+
+  // Progresso até o próximo título
+  const limites = [200, 600, 1500, 3000];
+  const prox = limites.find(l => pontos < l) || 3000;
+  const progresso = clamp(pontos / prox, 0, 1);
+  const by2 = by + 420;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.roundRect(bx + 40, by2, bw - 80, 22, 11); ctx.fill();
+  const gradBar = ctx.createLinearGradient(bx + 40, 0, bx + bw - 40, 0);
+  gradBar.addColorStop(0, '#f472b6'); gradBar.addColorStop(1, '#facc15');
+  ctx.fillStyle = gradBar;
+  ctx.beginPath(); ctx.roundRect(bx + 40, by2, (bw - 80) * progresso, 22, 11); ctx.fill();
+  ctx.textAlign = 'center'; ctx.font = '13px "Consolas", monospace'; ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('PROGRESSO ATÉ O PRÓXIMO TÍTULO: ' + Math.round(progresso * 100) + '%', cx, by2 + 48);
+
+  ctx.font = '16px "Segoe UI", sans-serif'; ctx.fillStyle = '#facc15';
+  ctx.fillText('Procurado agora: ' + '★'.repeat(wanted) + '☆'.repeat(5 - wanted), cx, by2 + 78);
+
+  ctx.font = '12px "Consolas", monospace'; ctx.fillStyle = '#475569';
+  ctx.fillText('Estatísticas salvas automaticamente', cx, by + bh - 20);
+}
+
+function formatTempo(seg) {
+  const t = Math.floor(seg);
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  return h > 0
+    ? h + 'h ' + String(m).padStart(2, '0') + 'm'
+    : String(m).padStart(2, '0') + 'm ' + String(s).padStart(2, '0') + 's';
 }

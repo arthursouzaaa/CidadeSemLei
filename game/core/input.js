@@ -19,11 +19,10 @@ addEventListener('mousemove', e => {
   mouse.y = e.clientY; 
 });
 
-addEventListener('mousedown', (e) => { 
-  if (e.button === 0) { // Apenas botão esquerdo
-    mouse.down = true; 
-    mouse.clicked = true; // PULSO DE CLIQUE: as UIs vão consumir e voltar pra false
-    if (typeof st !== 'undefined' && st === 'menu') start(); 
+addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    mouse.down = true;
+    mouse.clicked = true;
   }
 });
 

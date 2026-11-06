@@ -2,7 +2,7 @@ const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 const lc = document.createElement('canvas');
 const lx = lc.getContext('2d');
-const ZOOM_BASE = 1.25;
+let ZOOM_BASE = 1.25;
 let W, H;
 
 function rs() {

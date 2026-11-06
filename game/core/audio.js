@@ -1,4 +1,11 @@
-let ac, nb, eo, eg, radio = true, rStep = 0;
+let ac, nb, eo, eg, mg, radio = true, rStep = 0;
+let masterVol = 1;
+
+// Volume mestre (0 a 1), aplicado a todos os sons. Vem das opções do jogo.
+function setMasterVol(v) {
+  masterVol = Math.max(0, Math.min(1, v));
+  if (mg) mg.gain.value = masterVol;
+}
 
 function A() {
   if (!ac) {
@@ -7,6 +14,9 @@ function A() {
       nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
       const d = nb.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = R() * 2 - 1;
+      mg = ac.createGain();
+      mg.gain.value = masterVol;
+      mg.connect(ac.destination);
     } catch (e) { ac = null; }
   }
   return ac;
@@ -21,7 +31,7 @@ function snd(f, d = .1, t = 'square', v = .04, sl = 0) {
     if (sl) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + sl), n + d);
     g.gain.setValueAtTime(v, n);
     g.gain.exponentialRampToValueAtTime(.001, n + d);
-    o.connect(g); g.connect(c.destination);
+    o.connect(g); g.connect(mg);
     o.start(); o.stop(n + d);
   } catch (e) {}
 }
@@ -34,7 +44,7 @@ function noise(d = .2, v = .1, fq = 1200) {
     f.type = 'lowpass'; f.frequency.value = fq;
     g.gain.setValueAtTime(v, n);
     g.gain.exponentialRampToValueAtTime(.001, n + d);
-    s.connect(f); f.connect(g); g.connect(c.destination);
+    s.connect(f); f.connect(g); g.connect(mg);
     s.start(); s.stop(n + d);
   } catch (e) {}
 }
@@ -47,7 +57,7 @@ function engine(c) {
       const f = x.createBiquadFilter();
       f.type = 'lowpass'; f.frequency.value = 500;
       eo.type = 'sawtooth'; eg.gain.value = 0;
-      eo.connect(f); f.connect(eg); eg.connect(x.destination);
+      eo.connect(f); f.connect(eg); eg.connect(mg);
       eo.start();
     }
     if (c) {

@@ -60,6 +60,7 @@ function mkPed(x, y, o = {}) {
 function init() {
   cars = []; peds = []; bullets = []; PT = []; cash = []; pk = []; FT = []; toasts = [];
   const saved = loadGame();
+  stats = saved.stats;
   money = saved.money; owned = saved.owned; ammo = saved.ammo; garage = saved.garage;
   inv = saved.inv; vestEnd = 0;
   bank = saved.bank; debt = saved.debt; look = saved.look;
@@ -89,7 +90,10 @@ function start() {
 function toast(t) { toasts.push({ t, l: 4 }); }
 function ftext(x, y, t, c = '#fff') { FT.push({ x, y, t, c, l: 1 }); }
 function crime(n) {
-  if (n > wanted) { wanted = Math.min(5, n); toast('Nível de procurado: ' + '★'.repeat(wanted)); }
+  if (n > wanted) {
+    wanted = Math.min(5, n); stats.crimes++;
+    toast('Nível de procurado: ' + '★'.repeat(wanted));
+  }
   heatT = 0;
 }
 
@@ -141,15 +145,20 @@ function hurtP(d, iv = .3) {
   if (P.iv > 0 || st !== 'play') return;
   P.hp -= d; P.iv = iv; hurtF = .4; burst(P.x, P.y, '#b91c1c', 5, 120);
   flash('220,38,38', 0.2, 0.15);
+  if (d >= 3) ftext(P.x, P.y - 30, '-' + Math.round(d), '#f87171');
 }
+
 function hurtPed(p, d, src) {
   if (p.dead) return;
   p.hp -= d; burst(p.x, p.y, '#b91c1c', 5, 120); p.fl = Math.max(p.fl, 5);
   if (src === 'p') crime(p.cop ? 2 : 1);
+  if (src === 'p') ftext(p.x, p.y - 18, '-' + Math.round(d), '#ffffff');
   if (p.hp <= 0) {
     p.dead = 1; p.dt = 12;
+    if (src === 'p') stats.abatidos++;
     cash.push({ x: p.x, y: p.y, v: p.cop ? 100 : Math.round(rnd(10, 80)) });
     burst(p.x, p.y, '#991b1b', 12, 160, .8);
+    if (src === 'p') ftext(p.x, p.y - 30, 'ABATIDO', '#facc15');
     if (src === 'p' && p.cop) crime(Math.min(5, Math.max(wanted, 2) + 1));
   }
 }
@@ -495,6 +504,7 @@ function updBullets(dt) {
       if (b.l > 0) for (const c of cars) {
         if (c.drv !== 'p' && !c.dead && hyp(c.x - b.x, c.y - b.y) < 20) {
           c.hp -= b.d * .35 * c.armor; b.l = 0; burst(b.x, b.y, '#fbbf24', 3, 120, .2, 2);
+          ftext(c.x, c.y - 14, '-' + Math.round(b.d * .35 * c.armor), '#ffffff');
           if (c.cop || c.pol) crime(2); break;
         }
       }
@@ -625,6 +635,7 @@ function updMission(dt) {
   }
   if (done) {
     money += m.r; saveGame(); toast('MISSÃO COMPLETA! +$' + m.r);
+    stats.missoes++; stats.ganho += m.r;
     snd(600, .4, 'triangle', .07, 800);
     mission = null; mWait = 6;
   }
@@ -651,13 +662,14 @@ function update(dt) {
 
   if (!order) updMission(dt);
 
-for (const c of cash) if (hyp(c.x - P.x, c.y - P.y) < 24) {
-  c.g = 1; money += c.v; saveGame();
-  ftext(c.x, c.y, '+$' + c.v, '#4ade80');
-  snd(900, .08, 'sine', .05, 300);
-  flash('74,222,128', 0.15, 0.12);
-}
-cash = cash.filter(c => !c.g);
+  for (const c of cash) if (hyp(c.x - P.x, c.y - P.y) < 24) {
+    c.g = 1; money += c.v; saveGame();
+    stats.ganho += c.v;
+    ftext(c.x, c.y, '+$' + c.v, '#4ade80');
+    snd(900, .08, 'sine', .05, 300);
+    flash('74,222,128', 0.15, 0.12);
+  }
+  cash = cash.filter(c => !c.g);
 
   for (const k of pk) if (!P.veh && hyp(k.x - P.x, k.y - P.y) < 20) {
     if (k.t === 'hp') { if (P.hp < 100) { P.hp = Math.min(100, P.hp + 40); k.g = 1; ftext(k.x, k.y, '+Vida', '#f87171'); } }

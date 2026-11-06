@@ -6,6 +6,19 @@ let debt = 0;
 let look = { shirt: '#2563eb', pants: '#1f2937' };
 let houses = [];
 let spawnHouse = null;
+let stats = defaultStats();
+
+function defaultStats() {
+  return { tempo: 0, crimes: 0, missoes: 0, ganho: 0, abatidos: 0, pontuacao: 0 };
+}
+
+function loadStats(d) {
+  const s = defaultStats();
+  if (d && d.stats && typeof d.stats === 'object') {
+    for (const k in s) if (typeof d.stats[k] === 'number') s[k] = d.stats[k];
+  }
+  return s;
+}
 
 function saveGame() {
   try {
@@ -14,8 +27,9 @@ function saveGame() {
       money, owned, garage, inv,
       ammo: ammo.map(a => a === Infinity ? -1 : a),
       bank, debt, look, houses, spawnHouse,
-      gameTime: tm,                 // relógio do jogo (dia/noite)
-      interestDay: lastInterestDay, // último dia em que os juros foram aplicados
+      gameTime: tm,
+      interestDay: lastInterestDay,
+      stats,
       run: {
         x: P ? Math.round(P.x) : SX, y: P ? Math.round(P.y) : SY,
         mission: mission ? { t: mission.t, r: mission.r } : null
@@ -49,6 +63,7 @@ function defaultSave() {
     bank: { acc: null, pin: null, balance: 0 }, debt: 0,
     look: { shirt: '#2563eb', pants: '#1f2937' },
     houses: [], spawnHouse: null,
+    stats: defaultStats(),
     run: null
   };
 }
@@ -98,6 +113,7 @@ function loadGame() {
       },
       houses: Array.isArray(d.houses) ? d.houses.filter(id => typeof id === 'string') : [],
       spawnHouse: typeof d.spawnHouse === 'string' ? d.spawnHouse : null,
+      stats: loadStats(d),
       run: d.run && typeof d.run.x === 'number' ? d.run : null
     };
   } catch (e) {

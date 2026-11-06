@@ -5,6 +5,7 @@ function loop(t) {
   const dt = Math.min(.033, (t - last) / 1000 || .016);
   last = t;
   flashT = Math.max(0, flashT - dt);
+  if (st === 'play') stats.tempo += dt;
 
   if (st === 'play') { update(dt); updCam(dt); }
   else if (st === 'casino') { casinoUpdate(dt); }
