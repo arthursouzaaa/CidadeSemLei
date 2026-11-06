@@ -24,7 +24,7 @@ function drawNightGlow(dk, i0, i1, j0, j1) {
   }
 
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    const b = blocks[j * N + i];
+    const b = blocks[j * NW + i];
     b.bl.forEach((q, bi) => {
       if ((i + j + bi) % 2) return;
       const rgb = NEON_RGB[(i * 3 + j * 5 + bi) % NEON_RGB.length];

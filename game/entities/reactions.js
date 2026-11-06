@@ -26,7 +26,7 @@ function updReactions() {
 function parkCars() {
   let n = 0;
   for (let t = 0; t < 200 && n < 22; t++) {
-    const i = (R() * N) | 0, j = (R() * N) | 0, ix = i * CELL, jy = j * CELL;
+    const i = (R() * NW) | 0, j = (R() * NH) | 0, ix = i * CELL, jy = j * CELL;
     let x, y, a;
     if (R() < .5) { x = ix + RD + rnd(60, CELL - RD - 60); y = jy - 4; a = 0; }
     else { x = ix - 4; y = jy + RD + rnd(60, CELL - RD - 60); a = Math.PI / 2; }

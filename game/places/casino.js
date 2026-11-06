@@ -5,7 +5,7 @@ const CA_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const CA_DOOR = { x: CA_RECT.x + CA_RECT.w / 2, y: CA_RECT.y + CA_RECT.h + 4 };
-blocks[CA_CELL.j * N + CA_CELL.i] = {
+blocks[CA_CELL.j * NW + CA_CELL.i] = {
   x: CA_CELL.i * CELL + RD, y: CA_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: CA_RECT.x, y: CA_RECT.y, w: CA_RECT.w, h: CA_RECT.h, z: 180, col: '#b91c1c' }]
 };

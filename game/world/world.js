@@ -1,11 +1,7 @@
-// ===== MUNDO: tamanho e geração dos quarteirões =====
-// Fase 0.5a: NW/NH (largura/altura em quarteirões). Ambos valem 16 por enquanto.
-// N e WS são aliases temporários, mantidos até o fim da 0.5a.
 const CELL = 360, RD = 120;
 const NW = 16, NH = 16;
 const WSW = CELL * NW, WSH = CELL * NH;
-const N = NW;          // alias temporário (remover no fim da 0.5a)
-const WS = WSW;        // alias temporário (remover no fim da 0.5a)
+
 
 const blocks = [];
 const ROOFS = ['#7b8794','#a9714b','#5b7c99','#8e6c9f','#6b9080','#b5838d','#8d99ae','#c08552','#6d6875'];

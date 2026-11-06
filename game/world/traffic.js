@@ -1,4 +1,5 @@
 // ===== SEMÁFOROS, BOMBEIROS E RESPOSTA A INCIDENTES =====
+// Fase 0.5a: limites por eixo (NW/NH). Mesmo comportamento.
 const LIGHT_HALF = 8;
 const LIGHT_YELLOW = 1;
 let fireSpawnT = 20;
@@ -29,7 +30,7 @@ function redAhead(c) {
     nj = d === 1 ? Math.floor((c.y - RD / 2) / CELL) + 1 : Math.ceil((c.y - RD / 2) / CELL) - 1;
     ahead = Math.abs(nj * CELL + RD / 2 - c.y);
   }
-  if (ni < 0 || nj < 0 || ni >= N || nj >= N) return false;
+  if (ni < 0 || nj < 0 || ni >= NW || nj >= NH) return false;
   if (ahead <= 12 || ahead > 110) return false;
   const ph = lightPhase(ni, nj), axis = horiz ? 'h' : 'v';
   if (ph === axis) return false;
@@ -45,7 +46,7 @@ function gridPath(si, sj, ei, ej) {
     if (i === ei && j === ej) break;
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const ni = i + di, nj = j + dj;
-      if (ni < 0 || nj < 0 || ni >= N || nj >= N || prev.has(k(ni, nj))) continue;
+      if (ni < 0 || nj < 0 || ni >= NW || nj >= NH || prev.has(k(ni, nj))) continue;
       prev.set(k(ni, nj), [i, j]); q.push([ni, nj]);
     }
   }
@@ -81,7 +82,7 @@ function updFire(c, dt) {
       return;
     }
     const [ci, cj] = nearestNode(c.x, c.y);
-    const t = c.target || [(R() * N) | 0, (R() * N) | 0];
+    const t = c.target || [(R() * NW) | 0, (R() * NH) | 0];
     c.target = null;
     c.path = gridPath(ci, cj, t[0], t[1]);
     c.path.shift();
@@ -104,7 +105,7 @@ function callIncident(x, y) {
   if (cars.some(c => c.fire && c.inc)) return;
   const [ni, nj] = nearestNode(x, y);
   for (let t = 0; t < 60; t++) {
-    const i = (R() * N) | 0, j = (R() * N) | 0, [sx, sy] = nodeXY(i, j);
+    const i = (R() * NW) | 0, j = (R() * NH) | 0, [sx, sy] = nodeXY(i, j);
     const d = hyp(sx - x, sy - y);
     if (d < 500 || d > 900) continue;
     const c = mkFire(sx, sy, Math.atan2(y - sy, x - sx));
@@ -122,7 +123,7 @@ function updFireSpawn(dt) {
   fireSpawnT = 40 + R() * 30;
   if (cars.filter(c => c.fire && !c.dead).length >= 2) return;
   for (let t = 0; t < 40; t++) {
-    const [sx, sy] = nodeXY((R() * N) | 0, (R() * N) | 0);
+    const [sx, sy] = nodeXY((R() * NW) | 0, (R() * NH) | 0);
     const d = hyp(sx - P.x, sy - P.y);
     if (d < 700 || d > 1100) continue;
     cars.push(mkFire(sx, sy, 0));

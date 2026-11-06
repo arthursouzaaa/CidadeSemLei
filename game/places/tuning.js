@@ -5,7 +5,7 @@ const OF_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const OF_DOOR = { x: OF_RECT.x + OF_RECT.w / 2, y: OF_RECT.y + OF_RECT.h + 4 };
-blocks[OF_CELL.j * N + OF_CELL.i] = {
+blocks[OF_CELL.j * NW + OF_CELL.i] = {
   x: OF_CELL.i * CELL + RD, y: OF_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: OF_RECT.x, y: OF_RECT.y, w: OF_RECT.w, h: OF_RECT.h, z: 100, col: '#525252' }]
 };

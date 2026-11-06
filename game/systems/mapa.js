@@ -1,4 +1,5 @@
 // ===== MAPA GRANDE (abre clicando no minimapa ou com N) =====
+// Fase 0.5a: NW/NH e WSW/WSH. Escala pelo maior lado do mundo. Mesmo comportamento com 16x16.
 const MM = { S: 84 };
 const MAP = { ox: 0, oy: 0, sc: 1, size: 0 };
 const DOT_RANGE = 1000;
@@ -14,7 +15,8 @@ function clickOnMinimap(x, y) {
 
 function mapLayout() {
   const s = Math.min(W, H) - 200;
-  MAP.size = s; MAP.sc = s / WS;
+  const lado = Math.max(WSW, WSH);
+  MAP.size = s; MAP.sc = s / lado;
   MAP.ox = (W - s) / 2; MAP.oy = (H - s) / 2 + 10;
 }
 function toScr(x, y) { return [MAP.ox + x * MAP.sc, MAP.oy + y * MAP.sc]; }
@@ -47,7 +49,7 @@ function mapPois() {
 function nodeXY(i, j) { return [i * CELL + RD / 2, j * CELL + RD / 2]; }
 function nearestNode(x, y) {
   let bi = 0, bj = 0, bd = 1e9;
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+  for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
     const [nx, ny] = nodeXY(i, j), d = hyp(nx - x, ny - y);
     if (d < bd) { bd = d; bi = i; bj = j; }
   }
@@ -62,7 +64,7 @@ function routeTo(tx, ty) {
     if (i === ei && j === ej) break;
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const ni = i + di, nj = j + dj;
-      if (ni < 0 || nj < 0 || ni >= N || nj >= N || prev.has(k(ni, nj))) continue;
+      if (ni < 0 || nj < 0 || ni >= NW || nj >= NH || prev.has(k(ni, nj))) continue;
       prev.set(k(ni, nj), [i, j]); q.push([ni, nj]);
     }
   }
@@ -145,8 +147,8 @@ function drawMapa() {
   ctx.fillStyle = 'rgba(0,0,10,.86)'; ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = '#2d2f36'; ctx.fillRect(ox, oy, size, size);
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const b = blocks[j * N + i];
+  for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
+    const b = blocks[j * NW + i];
     const [sx, sy] = toScr(i * CELL + RD, j * CELL + RD);
     ctx.fillStyle = b.park ? '#2f6b3a' : '#6b7080';
     ctx.fillRect(sx, sy, (CELL - RD) * sc, (CELL - RD) * sc);

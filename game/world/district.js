@@ -1,7 +1,6 @@
 // ===== BAIRROS FIXOS (visual e comportamento) =====
-// Fase 0.5a: loops usam NW/NH. Mesmo mapa, mesmo visual.
+// Fase 0.5a: loops e mar usam NW/NH e WSW/WSH. Mesmo visual.
 
-// Paleta de prédios e alturas de cada zona ativa (declarada antes de usar)
 const BLD_POR_ZONA = {
   centro:     { bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
   industrial: { bld: ['#57534e', '#78716c', '#44403c'], z: [40, 70] },
@@ -22,10 +21,8 @@ for (const z of ZONAS) {
 
 const SPECIAL_CELLS = new Set(['5,5', '10,5', '4,5', '8,13', '7,7', '5,2', '13,3']);
 
-// Bairro atual do jogador (usado no aviso e no nome da tela)
 let curDistrict = null;
 
-// Zona ativa em coordenadas de mundo (x, y)
 function districtAt(x, y) {
   const i = Math.floor(x / CELL), j = Math.floor(y / CELL);
   return zonaIdDe(i, j);
@@ -44,7 +41,7 @@ for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
     for (let k = 0; k < 10; k++) GRASS.push({ x: i * CELL + RD + rnd(0, CELL - RD), y: j * CELL + RD + rnd(0, CELL - RD), s: 0 });
 }
 
-// Mar: faixa fixa à direita da orla (por enquanto; vira por zona na 0.5b)
+// Mar: faixa fixa à direita da orla (vira por zona na 0.5b)
 const SEA_X = 15 * CELL + RD + 90;
 function paintSea(x0, y0, x1, y1) {
   if (x1 < SEA_X - 40) return;
@@ -142,7 +139,6 @@ spawnPed = function (init, cop) {
   return p;
 };
 
-// Aviso ao entrar num bairro (envolve update depois de todos os scripts carregarem)
 window.addEventListener('load', () => {
   if (typeof update === 'function') {
     const _updateBase = update;

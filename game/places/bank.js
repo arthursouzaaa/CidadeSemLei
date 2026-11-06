@@ -5,7 +5,7 @@ const BANK_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const BANK_DOOR = { x: BANK_RECT.x + BANK_RECT.w / 2, y: BANK_RECT.y + BANK_RECT.h + 4 };
-blocks[BANK_CELL.j * N + BANK_CELL.i] = {
+blocks[BANK_CELL.j * NW + BANK_CELL.i] = {
   x: BANK_CELL.i * CELL + RD, y: BANK_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: BANK_RECT.x, y: BANK_RECT.y, w: BANK_RECT.w, h: BANK_RECT.h, z: 220, col: '#1e3a8a' }]
 };

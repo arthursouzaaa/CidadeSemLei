@@ -24,7 +24,7 @@ const SHOP_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const SHOP_DOOR = { x: SHOP_RECT.x + SHOP_RECT.w / 2, y: SHOP_RECT.y + SHOP_RECT.h + 4 };
-blocks[SHOP_CELL.j * N + SHOP_CELL.i] = {
+blocks[SHOP_CELL.j * NW + SHOP_CELL.i] = {
   x: SHOP_CELL.i * CELL + RD, y: SHOP_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: SHOP_RECT.x, y: SHOP_RECT.y, w: SHOP_RECT.w, h: SHOP_RECT.h, z: 110, col: '#14532d' }]
 };
@@ -36,7 +36,7 @@ const AM_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const AM_DOOR = { x: AM_RECT.x + AM_RECT.w / 2, y: AM_RECT.y + AM_RECT.h + 4 };
-blocks[AM_CELL.j * N + AM_CELL.i] = {
+blocks[AM_CELL.j * NW + AM_CELL.i] = {
   x: AM_CELL.i * CELL + RD, y: AM_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: AM_RECT.x, y: AM_RECT.y, w: AM_RECT.w, h: AM_RECT.h, z: 90, col: '#3f4a2a' }]
 };

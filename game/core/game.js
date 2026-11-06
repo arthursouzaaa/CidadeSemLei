@@ -1,3 +1,4 @@
+// Fase 0.5a: limite do menu por eixo (WSW). Mesmo comportamento.
 let last = performance.now();
 
 function loop(t) {
@@ -24,11 +25,11 @@ function loop(t) {
     }
   } else if (st === 'menu') {
     camX += dt * 70; camY = SY; tm += dt;
-    if (camX > WS - 600) camX = 600;
+    if (camX > WSW - 600) camX = 600;
   }
 
   draw();
-  mouse.clicked = false; // pulso de clique consumido neste quadro
+  mouse.clicked = false;
   requestAnimationFrame(loop);
 }
 

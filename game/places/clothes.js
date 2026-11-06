@@ -5,7 +5,7 @@ const CL_RECT = {
   w: CELL - RD - 40, h: CELL - RD - 40
 };
 const CL_DOOR = { x: CL_RECT.x + CL_RECT.w / 2, y: CL_RECT.y + CL_RECT.h + 4 };
-blocks[CL_CELL.j * N + CL_CELL.i] = {
+blocks[CL_CELL.j * NW + CL_CELL.i] = {
   x: CL_CELL.i * CELL + RD, y: CL_CELL.j * CELL + RD, s: CELL - RD, park: false, tr: [],
   bl: [{ x: CL_RECT.x, y: CL_RECT.y, w: CL_RECT.w, h: CL_RECT.h, z: 110, col: '#7c3aed' }]
 };

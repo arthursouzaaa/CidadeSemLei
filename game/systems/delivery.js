@@ -1,4 +1,5 @@
 // ===== TRABALHO HONESTO (ENTREGADOR) =====
+// Fase 0.5a: NW/NH e WSW/WSH. Mesmo comportamento.
 const DELIVERY = {
   pizza:  { pmin: 250, pmax: 400, len: 4, dmin: 400,  dmax: 800 },
   sushi:  { pmin: 600, pmax: 600, len: 6, dmin: 900,  dmax: 1400 },
@@ -14,7 +15,7 @@ for (const r of RESTS) {
   const [i, j] = r.cell;
   r.rect = { x: i * CELL + RD + 20, y: j * CELL + RD + 20, w: CELL - RD - 40, h: CELL - RD - 40 };
   r.door = { x: r.rect.x + r.rect.w / 2, y: r.rect.y + r.rect.h + 4 };
-  blocks[j * N + i] = {
+  blocks[j * NW + i] = {
     x: i * CELL + RD, y: j * CELL + RD, s: CELL - RD, park: false, tr: [],
     bl: [{ x: r.rect.x, y: r.rect.y, w: r.rect.w, h: r.rect.h, z: 100, col: r.col }]
   };
@@ -31,7 +32,7 @@ function makeOrder(r) {
   for (let t = 0; t < 80 && !dest; t++) {
     const a = rnd(0, TAU), d = rnd(cfg.dmin, cfg.dmax);
     const x = r.door.x + Math.cos(a) * d, y = r.door.y + Math.sin(a) * d;
-    if (x > 40 && y > 40 && x < WS - 40 && y < WS - 40 && isRoad(x, y)) dest = [x, y];
+    if (x > 40 && y > 40 && x < WSW - 40 && y < WSH - 40 && isRoad(x, y)) dest = [x, y];
   }
   if (!dest) dest = randWalk();
   let code = '';
@@ -159,7 +160,6 @@ function drawDeliveryHud() {
     const status = order.cold ? 'FRIA' : order.called ? 'CLIENTE LIGANDO' : 'ESFRIA EM ' + t + 's';
     const statusCol = order.cold ? '#f87171' : order.called ? '#facc15' : '#4ade80';
 
-    // Painel do código: fica no canto inferior direito, acima da barra de vida
     const bw = 300, bh = 96, bx = W - bw - 24, by = H - bh - 24;
     ctx.save();
     ctx.fillStyle = 'rgba(2,6,23,0.88)';
@@ -173,7 +173,6 @@ function drawDeliveryHud() {
     ctx.font = '12px "Consolas", monospace'; ctx.fillStyle = '#94a3b8';
     ctx.fillText('CÓDIGO DO CLIENTE', bx + 16, by + 44);
 
-    // Código grande, em destaque
     ctx.font = 'bold 34px "Consolas", monospace'; ctx.fillStyle = '#facc15';
     ctx.shadowColor = '#facc15'; ctx.shadowBlur = 10;
     ctx.fillText(order.code.split('').join(' '), bx + 16, by + 82);
@@ -199,7 +198,6 @@ function drawDeliveryHud() {
   }
 }
 
-// Tela do código: mantém o painel de digitação
 function drawCodeOverlay() {
   if (!order) return;
   if (deliveryAnimT < 1) deliveryAnimT += 0.1;
