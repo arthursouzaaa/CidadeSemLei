@@ -1,4 +1,5 @@
 // ===== VIDA NA CIDADE: grupos conversando, ações idle e locutor de rádio =====
+// Fase 0.5a: sorteio de quarteirão por eixo (NW/NH). Mesmo comportamento.
 const IDLE_MAX = 14;
 
 const _updPedBase = updPed;
@@ -19,9 +20,9 @@ function idleCount() { return peds.filter(p => p.idle && !p.dead).length; }
 
 function idleBlock() {
   for (let t = 0; t < 40; t++) {
-    const i = (R() * N) | 0, j = (R() * N) | 0;
+    const i = (R() * NW) | 0, j = (R() * NH) | 0;
     const d = hyp(i * CELL + CELL / 2 - P.x, j * CELL + CELL / 2 - P.y);
-    if (d >= 200 && d <= 900) return { i, j, b: blocks[j * N + i] };
+    if (d >= 200 && d <= 900) return { i, j, b: blocks[j * NW + i] };
   }
   return null;
 }

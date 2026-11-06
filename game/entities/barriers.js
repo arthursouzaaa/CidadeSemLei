@@ -1,5 +1,5 @@
 // ===== BLOQUEIOS DA POLÍCIA =====
-// Três viaturas paradas atravessadas numa rua. Ficam no mapa até o jogador se afastar.
+// Fase 0.5a: limites por eixo (WSW/WSH). Mesmo comportamento.
 const BARRIER_MIN_WANTED = 3;
 const BARRIER_MAX = 2;
 const BARRIER_REMOVE_DIST = 900;
@@ -11,7 +11,7 @@ function spawnBarrier() {
   for (let t = 0; t < 15; t++) {
     const a = rnd(0, TAU), r = rnd(420, 560);
     const x0 = P.x + Math.cos(a) * r, y0 = P.y + Math.sin(a) * r;
-    if (x0 < 80 || y0 < 80 || x0 > WS - 80 || y0 > WS - 80) continue;
+    if (x0 < 80 || y0 < 80 || x0 > WSW - 80 || y0 > WSH - 80) continue;
 
     const horiz = R() < .5;
     let cx, cy, ang;

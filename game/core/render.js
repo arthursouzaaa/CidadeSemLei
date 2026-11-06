@@ -46,7 +46,7 @@ const GUN_STYLE = {
 function drawHeldWeapon(hx, hy) {
   const key = P.sel ? null : P.w;
   if (P.sel === 'faca' || P.sel === 'bastao') return drawMelee(hx, hy);
-  if (P.sel) return; // granada/molotov/C4: sem arma na mão
+  if (P.sel) return;
   const st0 = GUN_STYLE[key] || GUN_STYLE['-1'];
 
   const since = P.cd > 0 ? 1 - P.cd / (st0.rec || 0.3) : 1;
@@ -182,11 +182,12 @@ function draw() {
   ctx.translate(W / 2, H / 2); ctx.scale(camZ, camZ); ctx.translate(-camX + sxk, -camY + syk);
   const vw = W / camZ / 2 + 60, vh = H / camZ / 2 + 60;
   const vx0 = camX - vw, vx1 = camX + vw, vy0 = camY - vh, vy1 = camY + vh;
-  const i0 = Math.max(0, Math.floor(vx0 / CELL)), i1 = Math.min(N - 1, Math.floor(vx1 / CELL));
-  const j0 = Math.max(0, Math.floor(vy0 / CELL)), j1 = Math.min(N - 1, Math.floor(vy1 / CELL));
+  // Limites da visão em quarteirões, por eixo (NW para i, NH para j)
+  const i0 = Math.max(0, Math.floor(vx0 / CELL)), i1 = Math.min(NW - 1, Math.floor(vx1 / CELL));
+  const j0 = Math.max(0, Math.floor(vy0 / CELL)), j1 = Math.min(NH - 1, Math.floor(vy1 / CELL));
 
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    const x = i * CELL, y = j * CELL, b = blocks[j * N + i];
+    const x = i * CELL, y = j * CELL, b = blocks[j * NW + i];
     ctx.fillStyle = '#2d2f36'; ctx.fillRect(x, y, CELL, RD); ctx.fillRect(x, y, RD, CELL);
     ctx.fillStyle = b.park ? '#2f6b3a' : '#8d9096'; ctx.fillRect(x + RD, y + RD, CELL - RD, CELL - RD);
     if (b.park) { ctx.strokeStyle = '#9a9ca3'; ctx.lineWidth = 14; ctx.strokeRect(x + RD + 7, y + RD + 7, CELL - RD - 14, CELL - RD - 14); }
@@ -250,7 +251,7 @@ function draw() {
   for (const b of bullets) { ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - b.vx * .025, b.y - b.vy * .025); ctx.stroke(); }
 
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    const b = blocks[j * N + i];
+    const b = blocks[j * NW + i];
     for (const t of b.tr) {
       ctx.fillStyle = '#14532d';
       ctx.beginPath(); ctx.arc(t[0] + (t[0] - camX) * .03, t[1] + (t[1] - camY) * .03, t[2], 0, TAU); ctx.fill();
@@ -258,7 +259,7 @@ function draw() {
       ctx.beginPath(); ctx.arc(t[0] + (t[0] - camX) * .03 - 3, t[1] + (t[1] - camY) * .03 - 3, t[2] * .6, 0, TAU); ctx.fill();
     }
   }
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) drawBld(blocks[j * N + i]);
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) drawBld(blocks[j * NW + i]);
   drawGarageBuilding();
   drawShopBuilding();
   drawAmmuBuilding();
@@ -309,12 +310,13 @@ function hud() {
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, S, 0, TAU); ctx.clip();
   ctx.fillStyle = '#161a22'; ctx.fillRect(cx - S, cy - S, S * 2, S * 2);
   ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-P.x, -P.y);
-  const a0 = Math.max(0, Math.floor((P.x - 650) / CELL)), a1 = Math.min(N - 1, Math.floor((P.x + 650) / CELL));
-  const b0 = Math.max(0, Math.floor((P.y - 650) / CELL)), b1 = Math.min(N - 1, Math.floor((P.y + 650) / CELL));
+  // Minimapa: quarteirões visíveis em torno do jogador, por eixo
+  const a0 = Math.max(0, Math.floor((P.x - 650) / CELL)), a1 = Math.min(NW - 1, Math.floor((P.x + 650) / CELL));
+  const b0 = Math.max(0, Math.floor((P.y - 650) / CELL)), b1 = Math.min(NH - 1, Math.floor((P.y + 650) / CELL));
   for (let j = b0; j <= b1; j++) for (let i = a0; i <= a1; i++) {
     const x = i * CELL, y = j * CELL;
     ctx.fillStyle = '#4a5060'; ctx.fillRect(x, y, CELL, RD); ctx.fillRect(x, y, RD, CELL);
-    ctx.fillStyle = blocks[j * N + i].park ? '#245a30' : '#2a2f3b'; ctx.fillRect(x + RD, y + RD, CELL - RD, CELL - RD);
+    ctx.fillStyle = blocks[j * NW + i].park ? '#245a30' : '#2a2f3b'; ctx.fillRect(x + RD, y + RD, CELL - RD, CELL - RD);
   }
   const dot = (x, y, c, r) => {
     let dx = x - P.x, dy = y - P.y; const d = hyp(dx, dy);
@@ -400,8 +402,7 @@ function overlays() {
     label('WASTED', W / 2, H / 2, Math.min(120, W / 8), '#dc2626', 'center');
     ctx.globalAlpha = 1;
   }
-  
-  // ==== CHAMADA DE TODOS OS MENUS PREMIUM ====
+
   if (st === 'shop') drawShopOverlay();
   if (st === 'ammu') drawAmmuOverlay();
   if (st === 'code') drawCodeOverlay();
@@ -411,8 +412,7 @@ function overlays() {
   if (st === 'atm') drawAtmOverlay();
   if (st === 'clothes') drawClothesOverlay();
   if (st === 'casino') drawCasinoOverlay();
-  
-  if (st === 'safehouse') drawSafehouseOverlay(); // <--- A LINHA MÁGICA AQUI
+  if (st === 'safehouse') drawSafehouseOverlay();
 
   drawDebugMenu();
 }

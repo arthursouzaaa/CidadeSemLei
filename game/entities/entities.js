@@ -105,7 +105,7 @@ function spawnCar(init, cop) {
   for (let t = 0; t < 12; t++) {
     const a = rnd(0, TAU), r = init ? rnd(250, 1400) : VR() + rnd(0, 250);
     let x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r;
-    if (x < 20 || y < 20 || x > WS - CELL || y > WS - CELL) continue;
+    if (x < 20 || y < 20 || x > WSW - CELL || y > WSH - CELL) continue;
 
     const ci = Math.floor(x / CELL), cj = Math.floor(y / CELL), dir = (R() * 4) | 0;
     if (dir % 2 === 0) y = cj * CELL + (dir === 0 ? 90 : 30);
@@ -264,7 +264,7 @@ function playerFoot(dt) {
   P.x += dx / l * sp * dt; P.y += dy / l * sp * dt;
   pushOut(P, 8);
   if (inBld(P.x, P.y, 6)) pushOut(P, 8);
-  P.x = clamp(P.x, 10, WS - 10); P.y = clamp(P.y, 10, WS - 10);
+  P.x = clamp(P.x, 10, WSW - 10); P.y = clamp(P.y, 10, WSH - 10);
 
   const wx = camX + (mouse.x - W / 2) / camZ;
   const wy = camY + (mouse.y - H / 2) / camZ;
@@ -313,7 +313,7 @@ function playerCar(c, dt) {
 
 function chooseDir(c) {
   const ci = Math.floor(c.x / CELL), cj = Math.floor(c.y / CELL);
-  const ok = [ci < N - 1, cj < N - 1, ci > 0, cj > 0];
+  const ok = [ci < NW - 1, cj < NH - 1, ci > 0, cj > 0];
   const dv = [[1, 0], [0, 1], [-1, 0], [0, -1]];
   let best = -1, bs = 1e9;
   for (let d = 0; d < 4; d++) {
@@ -354,7 +354,7 @@ function updCar(c, dt) {
     if (c.pol) c.cop = wanted > 0 && hyp(c.x - P.x, c.y - P.y) < 1500;
     const inI = inInter(c.x, c.y);
     if (inI && !c.inI) { c.inI = true; chooseDir(c); } else if (!inI) c.inI = false;
-    const ci = clamp(Math.floor(c.x / CELL), 0, N - 1), cj = clamp(Math.floor(c.y / CELL), 0, N - 1), d = c.dir;
+    const ci = clamp(Math.floor(c.x / CELL), 0, NW - 1), cj = clamp(Math.floor(c.y / CELL), 0, NH - 1), d = c.dir;
     let ex = 0, ey = 0;
     if (d % 2 === 0) ey = cj * CELL + (d === 0 ? 90 : 30) - c.y;
     else ex = ci * CELL + (d === 1 ? 30 : 90) - c.x;
@@ -401,8 +401,8 @@ function updCar(c, dt) {
       c.sp = c.vx * Math.cos(c.a) + c.vy * Math.sin(c.a);
     }
   }
-  if (c.x < 20 || c.x > WS - 20 || c.y < 20 || c.y > WS - 20) {
-    c.x = clamp(c.x, 20, WS - 20); c.y = clamp(c.y, 20, WS - 20);
+  if (c.x < 20 || c.x > WSW - 20 || c.y < 20 || c.y > WSH - 20) {
+    c.x = clamp(c.x, 20, WSW - 20); c.y = clamp(c.y, 20, WSH - 20);
     c.vx *= -.3; c.vy *= -.3; c.sp *= .3;
   }
   const v = hyp(c.vx, c.vy);
@@ -477,7 +477,9 @@ function updPed(p, dt) {
     if (p.fl <= 0 && !isRoad(p.x, p.y) && isRoad(nx, ny) && !inInter(nx, ny)) { p.a = ((R() * 4) | 0) * Math.PI / 2; p.t = rnd(1, 3); }
     else { p.x = nx; p.y = ny; }
     if (pushOut(p, 7) && p.fl <= 0) p.a = ((R() * 4) | 0) * Math.PI / 2;
-    if (p.x < 10 || p.y < 10 || p.x > WS - 10 || p.y > WS - 10) { p.x = clamp(p.x, 10, WS - 10); p.y = clamp(p.y, 10, WS - 10); p.a += Math.PI; }
+    if (p.x < 10 || p.y < 10 || p.x > WSW - 10 || p.y > WSH - 10) {
+      p.x = clamp(p.x, 10, WSW - 10); p.y = clamp(p.y, 10, WSH - 10); p.a += Math.PI;
+    }
   }
 }
 
@@ -529,7 +531,7 @@ function startRace() {
     let p = null;
     for (let t = 0; t < 60 && !p; t++) {
       const a = rnd(0, TAU), r = rnd(900, 1400);
-      const q = [clamp(x + Math.cos(a) * r, 40, WS - 40), clamp(y + Math.sin(a) * r, 40, WS - 40)];
+      const q = [clamp(x + Math.cos(a) * r, 40, WSW - 40), clamp(y + Math.sin(a) * r, 40, WSH - 40)];
       if (isRoad(q[0], q[1])) p = q;
     }
     if (!p) p = [x, y];

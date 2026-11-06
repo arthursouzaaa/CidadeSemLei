@@ -1,5 +1,14 @@
 // ===== BAIRROS FIXOS (visual e comportamento) =====
-// Fase 0: os bairros agora vêm de zones.js (zonaIdDe). Mesmo mapa, mesmo visual.
+// Fase 0.5a: loops usam NW/NH. Mesmo mapa, mesmo visual.
+
+// Paleta de prédios e alturas de cada zona ativa (declarada antes de usar)
+const BLD_POR_ZONA = {
+  centro:     { bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
+  industrial: { bld: ['#57534e', '#78716c', '#44403c'], z: [40, 70] },
+  periferia:  { bld: ['#b45309', '#92400e', '#a8a29e', '#6b7280'], z: [30, 50] },
+  praia:      { bld: ['#38bdf8', '#f472b6', '#fde68a', '#fff7ed'], z: [30, 60] }
+};
+
 const DISTRICTS = {};
 for (const z of ZONAS) {
   if (!z.ativa) continue;
@@ -11,15 +20,10 @@ for (const z of ZONAS) {
   };
 }
 
-// Paleta de prédios e alturas de cada zona ativa (mesmos valores de antes)
-const BLD_POR_ZONA = {
-  centro:     { bld: ['#1e293b', '#334155', '#475569', '#0f766e', '#1e3a8a'], z: [200, 280] },
-  industrial: { bld: ['#57534e', '#78716c', '#44403c'], z: [40, 70] },
-  periferia:  { bld: ['#b45309', '#92400e', '#a8a29e', '#6b7280'], z: [30, 50] },
-  praia:      { bld: ['#38bdf8', '#f472b6', '#fde68a', '#fff7ed'], z: [30, 60] }
-};
-
 const SPECIAL_CELLS = new Set(['5,5', '10,5', '4,5', '8,13', '7,7', '5,2', '13,3']);
+
+// Bairro atual do jogador (usado no aviso e no nome da tela)
+let curDistrict = null;
 
 // Zona ativa em coordenadas de mundo (x, y)
 function districtAt(x, y) {
@@ -29,10 +33,10 @@ function districtAt(x, y) {
 function cellDistrict(i, j) { return zonaIdDe(i, j); }
 
 const PALMS = [], GRASS = [];
-for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
   const key = cellDistrict(i, j);
   if (!key || SPECIAL_CELLS.has(i + ',' + j)) continue;
-  const d = DISTRICTS[key], b = blocks[j * N + i];
+  const d = DISTRICTS[key], b = blocks[j * NW + i];
   for (const q of b.bl) { q.col = pick(d.bld); q.z = rnd(d.z[0], d.z[1]); }
   if (key === 'praia' && !b.park)
     for (let k = 0; k < 3; k++) PALMS.push({ x: i * CELL + RD + rnd(20, CELL - 40), y: j * CELL + RD + rnd(20, CELL - 40), s: rnd(.9, 1.3) });
@@ -40,16 +44,17 @@ for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
     for (let k = 0; k < 10; k++) GRASS.push({ x: i * CELL + RD + rnd(0, CELL - RD), y: j * CELL + RD + rnd(0, CELL - RD), s: 0 });
 }
 
+// Mar: faixa fixa à direita da orla (por enquanto; vira por zona na 0.5b)
 const SEA_X = 15 * CELL + RD + 90;
 function paintSea(x0, y0, x1, y1) {
   if (x1 < SEA_X - 40) return;
-  const top = 10 * CELL, bot = WS;
+  const top = 10 * CELL, bot = WSH;
   if (y1 < top || y0 > bot) return;
   const sx = Math.max(SEA_X, x0);
-  const g = ctx.createLinearGradient(SEA_X, 0, WS, 0);
+  const g = ctx.createLinearGradient(SEA_X, 0, WSW, 0);
   g.addColorStop(0, '#0e7490'); g.addColorStop(1, '#0c4a6e');
   ctx.fillStyle = g;
-  ctx.fillRect(SEA_X, top, WS - SEA_X + 200, bot - top + 200);
+  ctx.fillRect(SEA_X, top, WSW - SEA_X + 200, bot - top + 200);
   ctx.strokeStyle = 'rgba(224,242,254,.35)'; ctx.lineWidth = 2;
   for (let y = top + 20; y < bot; y += 36) {
     ctx.beginPath();
@@ -69,11 +74,11 @@ function paintSea(x0, y0, x1, y1) {
 }
 
 function paintDistricts(x0, y0, x1, y1) {
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+  for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
     const X = i * CELL, Y = j * CELL;
     if (X + CELL < x0 || X > x1 || Y + CELL < y0 || Y > y1) continue;
     const key = cellDistrict(i, j); if (!key) continue;
-    const d = DISTRICTS[key], b = blocks[j * N + i];
+    const d = DISTRICTS[key], b = blocks[j * NW + i];
     if (key === 'praia' && !b.park) {
       ctx.fillStyle = '#e8cc96'; ctx.fillRect(X + RD, Y + RD, CELL - RD, CELL - RD);
       ctx.fillStyle = 'rgba(180,140,80,.25)';
@@ -83,7 +88,7 @@ function paintDistricts(x0, y0, x1, y1) {
     if (d.road) { ctx.fillStyle = d.road; ctx.fillRect(X, Y, CELL, RD); ctx.fillRect(X, Y, RD, CELL); }
     if (d.ground && !b.park) { ctx.fillStyle = d.ground; ctx.fillRect(X + RD, Y + RD, CELL - RD, CELL - RD); }
   }
-  for (let j = 10; j < N; j++) {
+  for (let j = 10; j < NH; j++) {
     const X = 11 * CELL, Y = j * CELL;
     if (X + CELL < x0 || X > x1 || Y + CELL < y0 || Y > y1) continue;
     ctx.fillStyle = 'rgba(120,53,15,.35)';
@@ -137,7 +142,7 @@ spawnPed = function (init, cop) {
   return p;
 };
 
-// Aviso ao entrar num bairro e nome do bairro na tela (sem mudança)
+// Aviso ao entrar num bairro (envolve update depois de todos os scripts carregarem)
 window.addEventListener('load', () => {
   if (typeof update === 'function') {
     const _updateBase = update;

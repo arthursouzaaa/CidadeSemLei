@@ -1,8 +1,9 @@
 // ===== SUJEIRA VISUAL: decalques gerados uma vez ao carregar =====
+// Fase 0.5a: loop usa NW/NH. Mesmo mapa, mesmo visual.
 const DECALS = [];
 const ZEBRA = 'rgba(241,245,249,.7)';
 (function makeDecals() {
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+  for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
     const ix = i * CELL, jy = j * CELL;
     if (R() < .7) for (let k = 0; k < 4; k++) {
       DECALS.push({ t: 'rect', x: ix + RD + 8 + k * 13, y: jy + 10, w: 7, h: RD - 20, col: ZEBRA });

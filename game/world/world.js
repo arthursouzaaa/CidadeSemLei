@@ -1,4 +1,12 @@
-const CELL = 360, RD = 120, N = 16, WS = CELL * N;
+// ===== MUNDO: tamanho e geração dos quarteirões =====
+// Fase 0.5a: NW/NH (largura/altura em quarteirões). Ambos valem 16 por enquanto.
+// N e WS são aliases temporários, mantidos até o fim da 0.5a.
+const CELL = 360, RD = 120;
+const NW = 16, NH = 16;
+const WSW = CELL * NW, WSH = CELL * NH;
+const N = NW;          // alias temporário (remover no fim da 0.5a)
+const WS = WSW;        // alias temporário (remover no fim da 0.5a)
+
 const blocks = [];
 const ROOFS = ['#7b8794','#a9714b','#5b7c99','#8e6c9f','#6b9080','#b5838d','#8d99ae','#c08552','#6d6875'];
 
@@ -8,7 +16,7 @@ const SAFEHOUSE_CELLS = [
   [12, 14, '#0891b2'], [2, 6, '#7c2d12'], [14, 3, '#4c1d95']
 ];
 
-for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+for (let j = 0; j < NH; j++) for (let i = 0; i < NW; i++) {
   const x0 = i * CELL + RD, y0 = j * CELL + RD, s = CELL - RD;
   const b = { x: x0, y: y0, s, park: false, bl: [], tr: [] };
 
@@ -34,15 +42,15 @@ for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
 
 function getBlock(x, y) {
   const i = Math.floor(x / CELL), j = Math.floor(y / CELL);
-  if (i < 0 || j < 0 || i >= N || j >= N) return null;
+  if (i < 0 || j < 0 || i >= NW || j >= NH) return null;
   if (x - i * CELL < RD || y - j * CELL < RD) return null;
-  return blocks[j * N + i];
+  return blocks[j * NW + i];
 }
 function isRoad(x, y) {
-  return x >= 0 && y >= 0 && x < WS && y < WS && ((x % CELL < RD) || (y % CELL < RD));
+  return x >= 0 && y >= 0 && x < WSW && y < WSH && ((x % CELL < RD) || (y % CELL < RD));
 }
 function inInter(x, y) {
-  return x >= 0 && y >= 0 && x < WS && y < WS && (x % CELL < RD) && (y % CELL < RD);
+  return x >= 0 && y >= 0 && x < WSW && y < WSH && (x % CELL < RD) && (y % CELL < RD);
 }
 function inBld(x, y, r) {
   const b = getBlock(x, y); if (!b) return false;
@@ -51,7 +59,7 @@ function inBld(x, y, r) {
   return false;
 }
 function walkable(x, y, r) {
-  return x > r && y > r && x < WS - r && y < WS - r && !isRoad(x, y) && !inBld(x, y, r);
+  return x > r && y > r && x < WSW - r && y < WSH - r && !isRoad(x, y) && !inBld(x, y, r);
 }
 function pushOut(o, r) {
   const b = getBlock(o.x, o.y); if (!b) return 0;
@@ -76,7 +84,7 @@ function pushOut(o, r) {
 }
 function randWalk() {
   for (let t = 0; t < 40; t++) {
-    const x = rnd(40, WS - 40), y = rnd(40, WS - 40);
+    const x = rnd(40, WSW - 40), y = rnd(40, WSH - 40);
     if (walkable(x, y, 12)) return [x, y];
   }
   return [P ? P.x : 100, P ? P.y : 100];
