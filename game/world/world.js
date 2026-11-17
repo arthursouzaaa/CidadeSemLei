@@ -1,8 +1,7 @@
 // ===== MUNDO: tamanho e geração dos quarteirões =====
-// Fase 0.5b: mapa 32x32. O 16x16 original fica no canto NW (i 0..15, j 0..15),
-// com os mesmos pontos fixos. O resto é terreno neutro (prédios de cor única).
+// MAPA 16x16: cidade compacta para apresentação.
 const CELL = 360, RD = 120;
-const NW = 32, NH = 32;
+const NW = 16, NH = 16;
 const WSW = CELL * NW, WSH = CELL * NH;
 
 const ORIG_W = 16, ORIG_H = 16; // área original, com zonas e pontos fixos
